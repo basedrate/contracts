@@ -1,0 +1,32 @@
+
+> classic-level@1.3.0 install C:\Users\MIKAE\Documents\GitHub\pulserate-contracts\node_modules\classic-level
+> node-gyp-build
+
+
+> secp256k1@4.0.3 install C:\Users\MIKAE\Documents\GitHub\pulserate-contracts\node_modules\secp256k1
+> node-gyp-build || exit 0
+
+
+> keccak@3.0.3 install C:\Users\MIKAE\Documents\GitHub\pulserate-contracts\node_modules\keccak
+> node-gyp-build || exit 0
+
++ chai@4.2.0
++ @types/mocha@10.0.1
++ @types/chai@4.2.0
++ typechain@8.1.0
++ ts-node@10.9.1
++ hardhat-gas-reporter@1.0.8
++ solidity-coverage@0.8.1
++ @nomiclabs/hardhat-etherscan@3.0.0
++ @typechain/ethers-v5@10.1.0
++ @typechain/hardhat@6.1.2
++ @nomiclabs/hardhat-ethers@2.0.0
++ typescript@5.1.6
++ @nomicfoundation/hardhat-chai-matchers@1.0.0
+added 423 packages from 446 contributors, removed 6 packages, updated 298 packages and audited 740 packages in 133.723s
+
+123 packages are looking for funding
+  run `npm fund` for details
+
+found 24 vulnerabilities (1 low, 11 moderate, 9 high, 3 critical)
+  run `npm audit fix` to fix them, or `npm audit` for details
