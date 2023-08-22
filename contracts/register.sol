@@ -43,6 +43,7 @@ contract RegisterForWhitelist {
         require(startTime < block.timestamp, "Not started yet");
         require(endTime > block.timestamp, "Registering has ended");
         require(totalHeartBeat > 0, "totalHeartBeat must be greater than 0");
+         require(userHeartBeatRegistered[msg.sender] == 0, "already registered");
         _; 
     }
 
