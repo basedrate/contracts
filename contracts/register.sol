@@ -21,8 +21,8 @@ contract RegisterForWhitelist {
     uint256 public totalHeartBeatRegistered;
     uint256 public usersRegistered;
     address[] public registeredIndex;
-    uint256 public startTime = 1692727200;
-    uint256 public endTime = 1692813600;
+    uint256 public startTime = 1692898111;
+    uint256 public endTime = 1693094400;
     address public admin;
     address constant SINGLE_STAKE_ADDRESS = 0x94dF7470c5516442dfCFE0925Ec0EEd1ffA08d28;
 
