@@ -256,7 +256,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public totalContribution;
     uint256 public index;
     uint256 public presaleStartTime = 1693332000;
-    uint256 public forAllStartTime = 10800 + presaleStartTime;
+    uint256 public FCFSstartTime = 10800 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
     uint256 public BSHAREprice = (BSHAREforSale * 1e18) / (HARDCAP);
 
@@ -317,14 +317,14 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         }
     }
 
-    function setTime(uint256 _forAllStartTime, uint256 _presaleStartTime) public onlyOwner {
-        forAllStartTime = _forAllStartTime;
+    function setTime(uint256 _FCFSstartTime, uint256 _presaleStartTime) public onlyOwner {
+        FCFSstartTime = _FCFSstartTime;
         presaleStartTime = _presaleStartTime;
     }
 
     function Buy() public payable nonReentrant {
         require(end == false, "presale is ended");
-        require(block.timestamp > forAllStartTime || users[msg.sender].whitelist, "You are not Whitelist!");
+        require(block.timestamp > FCFSstartTime || users[msg.sender].whitelist, "You are not Whitelist!");
         require(users[msg.sender].once == false, "only once");
         require(block.timestamp > presaleStartTime, "Not started yet!");
         require(paused == false, "Contract is paused");
