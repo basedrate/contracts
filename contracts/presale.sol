@@ -255,6 +255,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public walletMin = 1e17;
     uint256 public totalContribution;
     uint256 public index;
+    mapping(uint256 => address) public userIndex;
     uint256 public presaleStartTime = 1693332000;
     uint256 public FCFSstartTime = 10800 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
@@ -288,24 +289,18 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
 
     function addAddressToWhitelist(address addr, uint256 limit) onlyOwner public returns(bool success) {
         UserData storage user = users[addr];
-        if (!user.whitelist) {
             user.whitelist = true;
             user.walletLimit = limit;
             emit WhitelistedAddressAdded(addr, limit);
             return true;
-        }
-        return false;
     }
 
     function _addAddressToWhitelist(address addr, uint256 limit) private returns(bool added) {
         UserData storage user = users[addr];
-        if (!user.whitelist) {
             user.whitelist = true;
             user.walletLimit = limit;
             emit WhitelistedAddressAdded(addr, limit);
             return true;
-        }
-        return false;
     }
 
     function addAddressesToWhitelist(address[] memory addrs, uint256[] memory limits) onlyOwner public returns(bool success) {
@@ -338,10 +333,14 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         } else {
             users[msg.sender].whitelist = false;
         }
+        if (users[msg.sender].ethContributed == 0) {
+        userIndex[index] = msg.sender;
+        index = index + 1;
+        }
         users[msg.sender].ethContributed += amount;
         users[msg.sender].brateBought += (BRATEprice * amount) / 1e18;
         users[msg.sender].bshareBought += (BSHAREprice * amount) / 1e18;
-        index = index ++;
+        
         emit buy(msg.sender, amount, (BRATEprice * amount) / 1e18, (BSHAREprice * amount) / 1e18);
     }
 
