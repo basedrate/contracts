@@ -347,7 +347,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         payable(msg.sender).transfer(amount);
     }
 
-    function WithdrawETHcall(uint256 amount) public payable onlyOwner {
+    function WithdrawETHcall(uint256 amount) public onlyOwner {
         require(address(this).balance >= amount, "Not enough balance");
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "Withdrawal failed");
