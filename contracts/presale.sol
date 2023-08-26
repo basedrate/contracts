@@ -244,7 +244,6 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         uint256 ethContributed;
         uint256 brateBought;
         uint256 bshareBought;
-        uint256 refEarned;
         bool whitelist;
         bool once;
         uint256 walletLimit;
