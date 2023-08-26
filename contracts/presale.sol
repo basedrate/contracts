@@ -353,6 +353,10 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         require(success, "Withdrawal failed");
     }
 
+    function renounceOwnership() public virtual override onlyOwner {
+    revert("Ownership renunciation is disabled");
+    }
+
     function checkContractBalance() public view returns(uint256) {
         return address(this).balance;
     }
