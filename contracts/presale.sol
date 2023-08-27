@@ -252,9 +252,11 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public constant BRATEforSale = 25e18;
     uint256 public constant BSHAREforSale = 25e18;
     uint256 public constant HARDCAP = 50e18;
+    uint256 public walletLimitFCFS;
     uint256 public walletMin = 1e17;
     uint256 public totalContribution;
     uint256 public index;
+    
     uint256 public presaleStartTime = 1693332000;
     uint256 public FCFSstartTime = 10800 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
@@ -323,7 +325,22 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         require(block.timestamp > presaleStartTime, "Not started yet!");
         require(paused == false, "Contract is paused");
         uint256 amount = msg.value;
-        require(amount <= users[msg.sender].walletLimit, "max buy exceeded");
+
+        if(FCFSstartTime < block.timestamp){
+            // in the whitelist period
+            require(amount <= users[msg.sender].walletLimit, "max buy exceeded");
+        } else {
+            // after the whitelist period
+            if (!users[msg.sender].whitelist) {
+            // if not whitelisted FCFS allocation
+            require(amount <= walletLimitFCFS, "max buy exceeded");
+            }
+            else {
+            // whitelisted unused spot after FCFS
+            require(amount <= users[msg.sender].walletLimit, "max buy exceeded");    
+            }
+        }
+
         require(amount >= walletMin, "min buy not reached");
         totalContribution += amount;
         require(totalContribution <= HARDCAP, "HARDCAP reached");
