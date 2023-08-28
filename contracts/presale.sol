@@ -249,10 +249,10 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         uint256 walletLimit;
     }
 
-    uint256 public constant BRATEforSale = 25e18;
-    uint256 public constant BSHAREforSale = 25e18;
-    uint256 public constant HARDCAP = 50e18;
-    uint256 public walletLimitFCFS;
+    uint256 public constant BRATEforSale = 27.5e18;
+    uint256 public constant BSHAREforSale = 27.5e18;
+    uint256 public constant HARDCAP = 55e18;
+    uint256 public walletLimitFCFS = 1e18;
     uint256 public walletMin = 1e17;
     uint256 public totalContribution;
     uint256 public index;
@@ -326,19 +326,11 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         require(paused == false, "Contract is paused");
         uint256 amount = msg.value;
 
-        if(FCFSstartTime < block.timestamp){
-            // in the whitelist period
-            require(amount <= users[msg.sender].walletLimit, "max buy exceeded");
-        } else {
-            // after the whitelist period
-            if (!users[msg.sender].whitelist) {
-            // if not whitelisted FCFS allocation
-            require(amount <= walletLimitFCFS, "max buy exceeded");
-            }
-            else {
-            // whitelisted unused spot after FCFS
-            require(amount <= users[msg.sender].walletLimit, "max buy exceeded");    
-            }
+        if (!users[msg.sender].whitelist) {
+        require(amount <= walletLimitFCFS, "max buy exceeded");
+        }
+        else {
+        require(amount <= users[msg.sender].walletLimit, "max buy exceeded");    
         }
 
         require(amount >= walletMin, "min buy not reached");
