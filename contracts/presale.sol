@@ -249,7 +249,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         uint256 walletLimit;
     }
 
-    uint256 public constant BRATEforSale = 27.5e18;
+    uint256 public constant BRATEforSale = 27.5e18 * 1000;
     uint256 public constant BSHAREforSale = 27.5e18;
     uint256 public constant HARDCAP = 55e18;
     uint256 public walletLimitFCFS = 1e18;
@@ -257,7 +257,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public totalContribution;
     uint256 public index;
     
-    uint256 public presaleStartTime = 1693332000;
+    uint256 public presaleStartTime = 1692464400;
     uint256 public FCFSstartTime = 10800 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
     uint256 public BSHAREprice = (BSHAREforSale * 1e18) / (HARDCAP);
@@ -369,6 +369,10 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     function checkContractBalance() public view returns(uint256) {
         return address(this).balance;
     }
+
+    function getUserData(address _user) public view returns(UserData memory) {
+    return users[_user];
+}
 
     receive() external payable {}
 }
