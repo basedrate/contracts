@@ -12,11 +12,11 @@ module.exports = {
         interval: 1000,
       },
       forking: {
-        url: "https://rpc.pulsechain.com", //mainnet
+        url: "https://base.meowrpc.com", //mainnet
       },
     },
-    pulseMain: {
-      url: `https://pulsechain.publicnode.com`,
+    baseMain: {
+      url: `https://base.meowrpc.com`,
       accounts: [
         process.env.privateKey,
         process.env.privateKeyRef,
@@ -29,11 +29,11 @@ module.exports = {
     },
     customChains: [
       {
-        network: "pulseMain",
-        chainId: 369,
+        network: "baseMain",
+        chainId: 8453,
         urls: {
-          apiURL: "https://scan.pulsechain.com/api",
-          browserURL: "https://scan.pulsechain.com/",
+          apiURL: "https://api.basescan.org/api",
+          browserURL: "https://basescan.org/",
         },
       },
     ],
