@@ -253,7 +253,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public constant BSHAREforSale = 27.5e18;
     uint256 public constant HARDCAP = 55e18;
     uint256 public walletLimitFCFS = 1e18;
-    uint256 public walletMin = 1e17;
+    uint256 public walletMin = 1e16;
     uint256 public totalContribution;
     uint256 public index;
     
@@ -332,7 +332,6 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         else {
         require(amount <= users[msg.sender].walletLimit, "max buy exceeded");    
         }
-
         require(amount >= walletMin, "min buy not reached");
         totalContribution += amount;
         require(totalContribution <= HARDCAP, "HARDCAP reached");
@@ -373,6 +372,15 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     function getUserData(address _user) public view returns(UserData memory) {
     return users[_user];
 }
+
+   function getTotalSum() public view returns (uint256 totalEthContributed, uint256 totalBrateBought, uint256 totalBshareBought) {
+        for(uint256 i = 0; i < index; i++) {
+            address currentUser = userIndex[i];
+            totalEthContributed += users[currentUser].ethContributed;
+            totalBrateBought += users[currentUser].brateBought;
+            totalBshareBought += users[currentUser].bshareBought;
+        }
+    }
 
     receive() external payable {}
 }
