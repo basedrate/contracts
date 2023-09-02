@@ -3,16 +3,7 @@ const {
   setBalance,
   time,
 } = require("@nomicfoundation/hardhat-network-helpers");
-
-const addresses = [
-  "0x2f104d180884061B11a54764C49De40Dce0EAfD2",
-  "0x41bF8b1c8A6fe0e70f9e81A5F200395EAb0134Df"
-];
-
-const limits = [
-  ethers.utils.parseEther("1"),
-  ethers.utils.parseEther("2")
-];
+const { addressesBatch1, limitsBatch1, addressesBatch2, limitsBatch2, addressesBatch3, limitsBatch3, addressesBatch4, limitsBatch4} = require('./wallets.js');
 
 const utils = ethers.utils;
 const provider = ethers.provider;
@@ -49,18 +40,81 @@ const deployContracts = async () => {
   );
 };
 
-const addWalletsWhitelist = async () => {
-  console.log("\n*** ADDING WALLET TO WHITELIST***");
-  tx = await presale.connect(deployer).addAddressesToWhitelist(addresses, limits);
+const addWalletsWhitelistBatch1 = async () => {
+  console.log("\n*** ADDING WALLETS TO WHITELIST***");
+  const gasEstimate = await presale.estimateGas.addAddressesToWhitelist(addressesBatch1, limitsBatch1);
+  const gasLimit = gasEstimate.mul(2);
+  const currentGasPrice = await deployer.getGasPrice();
+  const gasPrice = currentGasPrice.mul(2);
+  tx = await presale.connect(deployer).addAddressesToWhitelist(addressesBatch1, limitsBatch1, { gasLimit, gasPrice });
   receipt = await tx.wait();
 
-  console.log("Wallets added to whitelist");
+  const ETHlimits = limitsBatch1.map(limit => parseFloat(ethers.utils.formatEther(limit)));
+  for (let i = 0; i < addressesBatch1.length; i++) {
+    console.log(`${addressesBatch1[i]}, ${ETHlimits[i]}`);
+  }
+
+  console.log("Batch 1 wallets added to whitelist");
+};
+
+const addWalletsWhitelistBatch2 = async () => {
+  console.log("\n*** ADDING WALLETS TO WHITELIST***");
+  const gasEstimate = await presale.estimateGas.addAddressesToWhitelist(addressesBatch2, limitsBatch2);
+  const gasLimit = gasEstimate.mul(2);
+  const currentGasPrice = await deployer.getGasPrice();
+  const gasPrice = currentGasPrice.mul(2);
+  tx = await presale.connect(deployer).addAddressesToWhitelist(addressesBatch2, limitsBatch2, { gasLimit, gasPrice });
+  receipt = await tx.wait();
+
+  const ETHlimits = limitsBatch2.map(limit => parseFloat(ethers.utils.formatEther(limit)));
+  for (let i = 0; i < addressesBatch2.length; i++) {
+    console.log(`${addressesBatch2[i]}, ${ETHlimits[i]}`);
+  }
+
+  console.log("Batch 2 wallets added to whitelist");
+};
+
+const addWalletsWhitelistBatch3 = async () => {
+  console.log("\n*** ADDING WALLETS TO WHITELIST***");
+  const gasEstimate = await presale.estimateGas.addAddressesToWhitelist(addressesBatch3, limitsBatch3);
+  const gasLimit = gasEstimate.mul(2);
+  const currentGasPrice = await deployer.getGasPrice();
+  const gasPrice = currentGasPrice.mul(2);
+  tx = await presale.connect(deployer).addAddressesToWhitelist(addressesBatch3, limitsBatch3, { gasLimit, gasPrice });
+  receipt = await tx.wait();
+
+  const ETHlimits = limitsBatch3.map(limit => parseFloat(ethers.utils.formatEther(limit)));
+  for (let i = 0; i < addressesBatch3.length; i++) {
+    console.log(`${addressesBatch3[i]}, ${ETHlimits[i]}`);
+  }
+
+  console.log("Batch 3 wallets added to whitelist");
+};
+
+const addWalletsWhitelistBatch4 = async () => {
+  console.log("\n*** ADDING WALLETS TO WHITELIST***");
+  const gasEstimate = await presale.estimateGas.addAddressesToWhitelist(addressesBatch4, limitsBatch4);
+  const gasLimit = gasEstimate.mul(2);
+  const currentGasPrice = await deployer.getGasPrice();
+  const gasPrice = currentGasPrice.mul(2);
+  tx = await presale.connect(deployer).addAddressesToWhitelist(addressesBatch4, limitsBatch4, { gasLimit, gasPrice });
+  receipt = await tx.wait();
+
+  const ETHlimits = limitsBatch4.map(limit => parseFloat(ethers.utils.formatEther(limit)));
+  for (let i = 0; i < addressesBatch4.length; i++) {
+    console.log(`${addressesBatch4[i]}, ${ETHlimits[i]}`);
+  }
+
+  console.log("Batch 4 wallets added to whitelist");
 };
 
 const main = async () => {
   await setAddresses();
   await deployContracts();
-  await addWalletsWhitelist();
+  await addWalletsWhitelistBatch1();
+  await addWalletsWhitelistBatch2();
+  await addWalletsWhitelistBatch3();
+  await addWalletsWhitelistBatch4();
 };
 
 main()
