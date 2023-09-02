@@ -2,7 +2,7 @@ const { ethers } = require("hardhat");
 
 // BATCH 1 ----------------------------------------------------------------------------
 const addressesBatch1 = [
-  "0x35745391d5355F659a3fE6248cf6eD84494a3be6",
+"0x35745391d5355F659a3fE6248cf6eD84494a3be6",
 "0x1463759b046963309e1E2f996a48A9E4B612Afcd",
 "0x170E3338eB582767E6f23ca4fb7014CA09935197",
 "0xF46288c820C6CC64e09a59b59049Eff4C9fa6B82",
@@ -92,7 +92,7 @@ const limitsBatch1 = [
 
 // BATCH 2 ----------------------------------------------------------------------------
 const addressesBatch2 = [
-  "0xDdf5D5936F5a607b27d6f99eab9E25A99ceCe79C",
+"0xDdf5D5936F5a607b27d6f99eab9E25A99ceCe79C",
 "0x7641B221b008817D966E89e2310F7c51A3e7B448",
 "0x821456D6104CB9eeD3A4Ad8216Ef63953062cB49",
 "0x5b3427b93B0122E1f2FC69793ccF0ac52cE9A3bc",
@@ -136,7 +136,7 @@ const addressesBatch2 = [
 ];
 
 const limitsBatch2 = [
-  ethers.utils.parseEther("0.1"),
+ethers.utils.parseEther("0.1"),
 ethers.utils.parseEther("0.1"),
 ethers.utils.parseEther("0.1"),
 ethers.utils.parseEther("0.1"),
@@ -181,7 +181,7 @@ ethers.utils.parseEther("0.12")
 
 // BATCH 3 ----------------------------------------------------------------------------
 const addressesBatch3 = [
-  "0x37e014215902BA306dA13464A613F2E38578A6d0",
+"0x37e014215902BA306dA13464A613F2E38578A6d0",
 "0x7094072f97d04c0784fFB95677c52c605254152D",
 "0xd780B0C4F1e0dD3B2bC41749389893a9f79d320e",
 "0xf640288A25f920ef4579E2C28B28f9552a70C689",
@@ -245,7 +245,7 @@ const addressesBatch3 = [
 ];
 
 const limitsBatch3 = [
-  ethers.utils.parseEther("0.12"),
+ethers.utils.parseEther("0.12"),
 ethers.utils.parseEther("0.13"),
 ethers.utils.parseEther("0.14"),
 ethers.utils.parseEther("0.14"),
@@ -310,7 +310,7 @@ ethers.utils.parseEther("0.6")
 
 // BATCH 4 ----------------------------------------------------------------------------
 const addressesBatch4 = [
-  "0x2a303cfc47d64a05896686d1aeda1a8ae03bd178",
+"0x2a303cfc47d64a05896686d1aeda1a8ae03bd178",
 "0x4C374dD74eaF36E9804307C29760C73a988Cba02",
 "0x5d166646411D0D0a0a4AC01C4596f8DF2d5C781a",
 "0x3f529523984f91908c551B4ac9432e1049888Fd0",
@@ -332,7 +332,7 @@ const addressesBatch4 = [
 ];
 
 const limitsBatch4 = [
-  ethers.utils.parseEther("0.6"),
+ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),

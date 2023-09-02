@@ -25,7 +25,7 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      pulseMain: "0",
+      baseMain: process.env.apiKey,
     },
     customChains: [
       {
