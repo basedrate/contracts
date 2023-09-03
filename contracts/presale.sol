@@ -342,7 +342,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         }
         if (users[msg.sender].ethContributed == 0) {
         userIndex[index] = msg.sender;
-        index = index + 1;
+        index++;
         }
         users[msg.sender].ethContributed += amount;
         users[msg.sender].brateBought += (BRATEprice * amount) / 1e18;
