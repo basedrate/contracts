@@ -321,7 +321,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     function Buy() public payable nonReentrant {
         require(end == false, "presale is ended");
         require(block.timestamp > FCFSstartTime || users[msg.sender].whitelist, "You are not Whitelist!");
-        require(users[msg.sender].once == false, "only once");
+        require(users[msg.sender].once == false, "only one time");
         require(block.timestamp > presaleStartTime, "Not started yet!");
         require(paused == false, "Contract is paused");
         uint256 amount = msg.value;
