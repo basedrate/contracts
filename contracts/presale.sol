@@ -27,36 +27,23 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public walletMin = 1e16;
     uint256 public totalContribution;
     uint256 public userCount;
-    
     uint256 public presaleStartTime = 1694019600;
     uint256 public FCFSstartTime = 14400 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
     uint256 public BSHAREprice = (BSHAREforSale * 1e18) / (HARDCAP);
-
-    bool public paused;
     bool public end;
 
     event buy(address buyer, uint256 value, uint256 brate, uint256 bshare);
-    event Pause();
-    event Unpause();
+    event End();
     event WhitelistedAddressAdded(address addr, uint256 limit);
 
     function setWalletParameters(uint256 _walletMin) public onlyOwner {
         walletMin = _walletMin;
     }
 
-    function pause() onlyOwner public {
-        paused = true;
-        emit Pause();
-    }
-
-    function unpause() onlyOwner public {
-        paused = false;
-        emit Unpause();
-    }
-
     function setEnd(bool _end) onlyOwner public {
         end = _end;
+        emit End();
     }
 
     function addAddressToWhitelist(address addr, uint256 limit) onlyOwner public returns(bool success) {
@@ -90,13 +77,11 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     }
 
     function Buy() public payable nonReentrant {
-        require(end == false, "presale is ended");
+        require(end == false, "presale is stopped");
         require(block.timestamp > FCFSstartTime || users[msg.sender].whitelist, "You are not Whitelist!");
         require(users[msg.sender].once == false, "only one time");
         require(block.timestamp > presaleStartTime, "Not started yet!");
-        require(paused == false, "Contract is paused");
         uint256 amount = msg.value;
-
         if (!users[msg.sender].whitelist) {
         require(amount <= walletLimitFCFS, "max buy exceeded");
         }
