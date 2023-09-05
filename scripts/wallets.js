@@ -242,7 +242,8 @@ const addressesBatch3 = [
 "0xD0846D7D06f633b2Be43766E434eDf0acE9bA909",
 "0x9cD77917DDB112d8c61b2e3D4b4Fd1209a346611",
 "0x8c37c63362f2392190e00b42f3a0c68c6e5c58fa",
-"0x7b2e479A47430C6f484E1fD3577C87F218E010B5"
+"0x7b2e479A47430C6f484E1fD3577C87F218E010B5",
+"0x2A4Cdc9bBd937023A95E50185c0c027647f5a7b5"
 ];
 
 const limitsBatch3 = [
@@ -296,9 +297,10 @@ ethers.utils.parseEther("1.86"),
 ethers.utils.parseEther("1.9"),
 ethers.utils.parseEther("1.9"),
 ethers.utils.parseEther("2"),
-ethers.utils.parseEther("2.3"),
-ethers.utils.parseEther("2.3"),
-ethers.utils.parseEther("2.8"),
+ethers.utils.parseEther("2.2"),
+ethers.utils.parseEther("2.2"),
+ethers.utils.parseEther("2.4"),
+ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),
 ethers.utils.parseEther("0.6"),
