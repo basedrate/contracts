@@ -33,6 +33,9 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public BSHAREprice = (BSHAREforSale * 1e18) / (HARDCAP);
     bool public end;
 
+    uint256 public totalBrateBought;
+    uint256 public totalBshareBought;
+
     event buy(address buyer, uint256 value, uint256 brate, uint256 bshare);
     event End();
     event WhitelistedAddressAdded(address addr, uint256 limit);
@@ -121,6 +124,9 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
         users[msg.sender].brateBought += (BRATEprice * amount) / 1e18;
         users[msg.sender].bshareBought += (BSHAREprice * amount) / 1e18;
 
+        totalBrateBought += (BRATEprice * amount) / 1e18;
+        totalBshareBought += (BSHAREprice * amount) / 1e18;
+
         emit buy(
             msg.sender,
             amount,
@@ -148,23 +154,6 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
 
     function getUserData(address _user) public view returns (UserData memory) {
         return users[_user];
-    }
-
-    function getTotalSum()
-        public
-        view
-        returns (
-            uint256 totalEthContributed,
-            uint256 totalBrateBought,
-            uint256 totalBshareBought
-        )
-    {
-        for (uint256 i = 0; i < userCount; i++) {
-            address currentUser = userIndex[i];
-            totalEthContributed += users[currentUser].ethContributed;
-            totalBrateBought += users[currentUser].brateBought;
-            totalBshareBought += users[currentUser].bshareBought;
-        }
     }
 
     receive() external payable {}
