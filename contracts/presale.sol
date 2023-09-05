@@ -27,7 +27,7 @@ contract BasedRateSale is Ownable, ReentrancyGuard {
     uint256 public walletMin = 1e16;
     uint256 public totalContribution;
     uint256 public userCount;
-    uint256 public presaleStartTime = 1694019600;
+    uint256 public presaleStartTime = 1694106000;
     uint256 public FCFSstartTime = 14400 + presaleStartTime;
     uint256 public BRATEprice = (BRATEforSale * 1e18) / (HARDCAP);
     uint256 public BSHAREprice = (BSHAREforSale * 1e18) / (HARDCAP);
