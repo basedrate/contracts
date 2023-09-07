@@ -835,7 +835,7 @@ contract BaseShare is ERC20Burnable, Operator {
     constructor(
         uint256 _startTime,
         address _devFund
-    ) public ERC20("BaseShare", "BSHARE") {
+    ) public ERC20("BasedRate.io", "BSHARE") {
         startTime = _startTime;
         endTime = startTime + VESTING_DURATION;
 

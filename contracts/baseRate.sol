@@ -1012,7 +1012,7 @@ contract BaseRate is ERC20Burnable, Operator {
 
     bool public rewardPoolDistributed = false;
 
-    constructor() public ERC20("BaseRate", "BRATE") {
+    constructor() public ERC20("BasedRate.io", "BRATE") {
         taxOffice = msg.sender;
     }
 
