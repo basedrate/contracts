@@ -79,18 +79,18 @@ contract BaseRate is ERC20Burnable, Operator {
     }
 
 
-    function _getTombPrice() internal view returns (uint256 _tombPrice) {
+    function _getBratePrice() internal view returns (uint256 _bratePrice) {
         try IOracle(oracle).consult(address(this), 1e18) returns (uint144 _price) {
             return uint256(_price);
         } catch {
-            revert("Tomb: failed to fetch TOMB price from Oracle");
+            revert("Brate: failed to fetch BRATE price from Oracle");
         }
     }
 
-    function _updateTaxRate(uint256 _tombPrice) internal returns (uint256){
+    function _updateTaxRate(uint256 _bratePrice) internal returns (uint256){
         if (autoCalculateTax) {
             for (uint8 tierId = uint8(getTaxTiersTwapsCount()).sub(1); tierId >= 0; --tierId) {
-                if (_tombPrice >= taxTiersTwaps[tierId]) {
+                if (_bratePrice >= taxTiersTwaps[tierId]) {
                     require(taxTiersRates[tierId] < 10000, "tax equal or bigger to 100%");
                     taxRate = taxTiersRates[tierId];
                     return taxTiersRates[tierId];
@@ -169,8 +169,8 @@ contract BaseRate is ERC20Burnable, Operator {
     ) public override returns (bool) {
         uint256 currentTaxRate = 0;
         if (autoCalculateTax) {
-            uint256 currentTombPrice = _getTombPrice();
-            currentTaxRate = _updateTaxRate(currentTombPrice);
+            uint256 currentBratePrice = _getBratePrice();
+            currentTaxRate = _updateTaxRate(currentBratePrice);
         }
         if (currentTaxRate == 0 || excludedAddresses[sender] || excludedAddresses[recipient]) {
             _transfer(sender, recipient, amount);
@@ -212,8 +212,8 @@ contract BaseRate is ERC20Burnable, Operator {
         uint256 currentTaxRate = 0;
         address sender = msg.sender;
         if (autoCalculateTax) {
-            uint256 currentTombPrice = _getTombPrice();
-            currentTaxRate = _updateTaxRate(currentTombPrice);
+            uint256 currentBratePrice = _getBratePrice();
+            currentTaxRate = _updateTaxRate(currentBratePrice);
         }
         if (currentTaxRate == 0 || !isLP[recipient] || !isLP[sender]) {
             _transfer(sender, recipient, amount);
