@@ -188,9 +188,7 @@ contract BaseRate is ERC20Burnable, Operator {
     ) internal returns (bool) {
         uint256 taxAmount = amount.mul(taxRate).div(10000);
         uint256 amountAfterTax = amount.sub(taxAmount);
-        // Burn tax
         super.burnFrom(sender, taxAmount);
-        // Transfer amount after tax to recipient
         _transfer(sender, recipient, amountAfterTax);
         return true;
     }
