@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 interface ISHARE {
     function setDevFund(address _devFund) external;
+    function claimRewards() external;
 }
 
 contract TeamDistributor is Ownable {
@@ -17,6 +18,7 @@ contract TeamDistributor is Ownable {
     address public BRATE;
     address public BSHARE;
     address[] public team;
+    address public caller;
     ISHARE public SHARE;
 
     event ExecuteTransaction(
@@ -31,6 +33,15 @@ contract TeamDistributor is Ownable {
     function setAmounts(uint256 _brate, uint256 _bshare) public onlyOwner {
         brateAmount = _brate;
         bshareAmount = _bshare;
+    }
+
+    function setCaller(address _caller) public onlyOwner {
+        caller = _caller;
+    }
+
+    modifier onlyCaller() {
+         require(caller == msg.sender);
+        _; 
     }
 
     function setDevFund(address _devfund) public onlyOwner {
@@ -76,9 +87,10 @@ contract TeamDistributor is Ownable {
         emit Multisended(total, token);
     }
 
-    function automatedDistribution() external onlyOwner {
+    function automatedDistribution() external onlyCaller {
         uint256 totalBrate = 0;
         uint256 totalBshare = 0;
+        SHARE.claimRewards();
         require(team.length <= getArrayLimit(), "Array length exceeds limit");
         IERC20 brate = IERC20(BRATE);
         IERC20 bshare = IERC20(BSHARE);
@@ -102,9 +114,10 @@ contract TeamDistributor is Ownable {
         emit Multisended(totalBshare, BSHARE);
     }
 
-    function automatedDistributionFixedRate() external onlyOwner {
+    function automatedDistributionFixedRate() external onlyCaller {
         uint256 totalBrate = 0;
         uint256 totalBshare = 0;
+        SHARE.claimRewards();
         require(team.length <= getArrayLimit(), "Array length exceeds limit");
         IERC20 brate = IERC20(BRATE);
         IERC20 bshare = IERC20(BSHARE);
