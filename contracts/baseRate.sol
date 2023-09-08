@@ -994,6 +994,7 @@ contract BaseRate is ERC20Burnable, Operator {
 
     // Should the taxes be calculated using the tax tiers
     bool public autoCalculateTax;
+    mapping(address => bool) public isLP;
 
     // Current tax rate
     uint256 public taxRate;
@@ -1071,9 +1072,15 @@ contract BaseRate is ERC20Burnable, Operator {
         }
     }
 
+    function setLP(address _LP, bool _isLP) public onlyTaxOffice {
+        isLP[_LP] = _isLP;
+    }
+
     function enableAutoCalculateTax() public onlyTaxOffice {
         autoCalculateTax = true;
     }
+
+
 
     function disableAutoCalculateTax() public onlyTaxOffice {
         autoCalculateTax = false;
@@ -1182,7 +1189,7 @@ contract BaseRate is ERC20Burnable, Operator {
             uint256 currentTombPrice = _getTombPrice();
             currentTaxRate = _updateTaxRate(currentTombPrice);
         }
-        if (currentTaxRate == 0 || excludedAddresses[sender]) {
+        if (currentTaxRate == 0 || excludedAddresses[sender] || !isLP[recipient]) {
             _transfer(sender, recipient, amount);
         } else {
             _transferWithTax(recipient, amount);
