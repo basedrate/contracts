@@ -14,7 +14,6 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     IBasedRateSale public basedRateSale;
     IERC20 public brate;
     IERC20 public bshare;
-    
     uint256 public startTime;
     uint256 public endTime;
     uint256 public runtime; 
@@ -30,14 +29,13 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     }
 
     constructor(
-        address _basedRateSaleAddress, 
         uint256 _startTime, 
         uint256 _endTime, 
         address _brate, 
         address _bshare
     ) {
         require(_endTime > _startTime, "endtime has to be greater than start time");
-        basedRateSale = IBasedRateSale(_basedRateSaleAddress);
+        basedRateSale = IBasedRateSale(0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659);
         startTime = _startTime;
         endTime = _endTime;
         runtime = _endTime - _startTime;
@@ -69,7 +67,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         if ((pendingShareAmount + bshareClaimed) > bshareBought ) {
         pendingShareAmount = bshareBought - bshareClaimed;
         }
-        
+
         require((pendingRateAmount + pendingShareAmount) > 0, "No more left to claim!");
         
         brate.safeTransfer(user, pendingRateAmount);
@@ -140,5 +138,25 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         return basedRateSale.userCount();
     }
 
+    function updateSingleUser(address _user) external onlyOwner {
+        IBasedRateSale.UserData memory userData = basedRateSale.users(_user);
+        users[_user].brateBought = userData.brateBought;
+        users[_user].bshareBought = userData.bshareBought;
+    }
+
+    function updateSingleUserMan(address _user, uint256 _brateBought, uint256 _bshareBought) external onlyOwner {
+        users[_user].brateBought = _brateBought;
+        users[_user].bshareBought = _bshareBought;
+    }
+
+    function updateAllUsers() external onlyOwner {
+        uint256 totalUsers = basedRateSale.userCount();
+        for(uint256 i = 0; i < totalUsers; i++) {
+            address currentUser = basedRateSale.userIndex(i);
+            IBasedRateSale.UserData memory userData = basedRateSale.users(currentUser);
+            users[currentUser].brateBought = userData.brateBought;
+            users[currentUser].bshareBought = userData.bshareBought;
+        }
+}
 
 }
