@@ -150,6 +150,13 @@ contract BaseShareRewardPool is ReentrancyGuard {
         bool _hasGauge,
         IGauge _gauge
     ) public onlyOperator {
+        if(_hasGauge) {
+        IERC20 stakingToken = IERC20(_gauge.stakingToken());
+        require(_token == stakingToken, "incorrect gauge!");
+        }
+        if(!_hasGauge) {
+        require(address(_gauge) == address(this), "incorrect gauge!");
+        }
         require(_depositFeeBP <= 400, "add: invalid deposit fee basis points");
         checkPoolDuplicate(_token);
         if (_withUpdate) {
