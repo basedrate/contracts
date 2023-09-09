@@ -16,7 +16,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     IERC20 public bshare;
     uint256 public startTime;
     uint256 public endTime;
-    uint256 public runtime; 
+    uint256 public runtime = 3 days; 
 
     mapping(address => UserData) public users;
 
@@ -30,22 +30,19 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
 
     constructor(
         uint256 _startTime, 
-        uint256 _endTime, 
         address _brate, 
         address _bshare
     ) {
-        require(_endTime > _startTime, "endtime has to be greater than start time");
         basedRateSale = IBasedRateSale(0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659);
         startTime = _startTime;
-        endTime = _endTime;
-        runtime = _endTime - _startTime;
+        endTime = startTime + runtime;
         brate = IERC20(_brate);
         bshare = IERC20(_bshare);
     }
 
     function Claim() public nonReentrant {
-        
         address user = msg.sender;
+        require(users[user].lastClaimTime != 0,"invalid lastClaimTime");
         uint256 pendingShareAmount = pendingShare(user);
         uint256 pendingRateAmount = pendingRate(user);
         uint256 brateClaimed = users[user].brateClaimed;
@@ -142,11 +139,13 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         IBasedRateSale.UserData memory userData = basedRateSale.users(_user);
         users[_user].brateBought = userData.brateBought;
         users[_user].bshareBought = userData.bshareBought;
+        users[_user].lastClaimTime = startTime;
     }
 
     function updateSingleUserMan(address _user, uint256 _brateBought, uint256 _bshareBought) external onlyOwner {
         users[_user].brateBought = _brateBought;
         users[_user].bshareBought = _bshareBought;
+        users[_user].lastClaimTime = startTime;
     }
 
     function updateAllUsers() external onlyOwner {
@@ -156,6 +155,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
             IBasedRateSale.UserData memory userData = basedRateSale.users(currentUser);
             users[currentUser].brateBought = userData.brateBought;
             users[currentUser].bshareBought = userData.bshareBought;
+            users[currentUser].lastClaimTime = startTime;
         }
 }
 
