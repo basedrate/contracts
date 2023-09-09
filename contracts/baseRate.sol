@@ -119,7 +119,7 @@ contract BaseRate is ERC20Burnable, Operator {
 
     function setTaxRate(uint256 _taxRate) public onlyTaxManager {
         require(!autoCalculateTax, "auto calculate tax cannot be enabled");
-        require(_taxRate < 2000, "tax equal or bigger to 20%");
+        require(_taxRate <= 2000, "tax equal or bigger to 20%");
         taxRate = _taxRate;
     }
 
@@ -172,6 +172,9 @@ contract BaseRate is ERC20Burnable, Operator {
             uint256 currentBratePrice = _getBratePrice();
             currentTaxRate = _updateTaxRate(currentBratePrice);
         }
+        if (!autoCalculateTax) {
+            currentTaxRate = taxRate;
+        }
         if (currentTaxRate == 0 || excludedAddresses[sender] || excludedAddresses[recipient]) {
             _transfer(sender, recipient, amount);
         } else {
@@ -213,10 +216,17 @@ contract BaseRate is ERC20Burnable, Operator {
             uint256 currentBratePrice = _getBratePrice();
             currentTaxRate = _updateTaxRate(currentBratePrice);
         }
-        if (currentTaxRate == 0 || !isLP[recipient] || !isLP[sender]) {
+        if (!autoCalculateTax) {
+            currentTaxRate = taxRate;
+        }
+        if (currentTaxRate == 0) {
             _transfer(sender, recipient, amount);
+        }
+        if (isLP[recipient] || isLP[sender]) {
+        _transferWithTax(recipient, amount);
+        
         } else {
-            _transferWithTax(recipient, amount);
+        _transfer(sender, recipient, amount);
         }
         return true;
     }
