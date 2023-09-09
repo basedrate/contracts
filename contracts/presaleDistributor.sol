@@ -65,7 +65,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         pendingShareAmount = bshareBought - bshareClaimed;
         }
 
-        require((pendingRateAmount + pendingShareAmount) > 0, "No more left to claim!");
+        require((pendingRateAmount + pendingShareAmount) > 0, "Nothing to claim!");
         
         brate.safeTransfer(user, pendingRateAmount);
         bshare.safeTransfer(user, pendingShareAmount);
