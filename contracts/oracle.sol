@@ -351,9 +351,9 @@ interface IUniswapV2Pair {
             uint32 blockTimestampLast
         );
 
-    function price0CumulativeLast() external view returns (uint256);
+    function reserve0CumulativeLast() external view returns (uint256);
 
-    function price1CumulativeLast() external view returns (uint256);
+    function reserve1CumulativeLast() external view returns (uint256);
 
     function kLast() external view returns (uint256);
 
@@ -394,8 +394,8 @@ library UniswapV2OracleLibrary {
         )
     {
         blockTimestamp = currentBlockTimestamp();
-        price0Cumulative = IUniswapV2Pair(pair).price0CumulativeLast();
-        price1Cumulative = IUniswapV2Pair(pair).price1CumulativeLast();
+        price0Cumulative = IUniswapV2Pair(pair).reserve0CumulativeLast();
+        price1Cumulative = IUniswapV2Pair(pair).reserve1CumulativeLast();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
         (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IUniswapV2Pair(pair).getReserves();
@@ -612,8 +612,8 @@ contract Oracle is Epoch {
 
     // oracle
     uint32 public blockTimestampLast;
-    uint256 public price0CumulativeLast;
-    uint256 public price1CumulativeLast;
+    uint256 public reserve0CumulativeLast;
+    uint256 public reserve1CumulativeLast;
     FixedPoint.uq112x112 public price0Average;
     FixedPoint.uq112x112 public price1Average;
 
@@ -627,8 +627,8 @@ contract Oracle is Epoch {
         pair = _pair;
         token0 = pair.token0();
         token1 = pair.token1();
-        price0CumulativeLast = pair.price0CumulativeLast(); // fetch the current accumulated price value (1 / 0)
-        price1CumulativeLast = pair.price1CumulativeLast(); // fetch the current accumulated price value (0 / 1)
+        reserve0CumulativeLast = pair.reserve0CumulativeLast(); // fetch the current accumulated price value (1 / 0)
+        reserve1CumulativeLast = pair.reserve1CumulativeLast(); // fetch the current accumulated price value (0 / 1)
         uint112 reserve0;
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = pair.getReserves();
@@ -649,11 +649,11 @@ contract Oracle is Epoch {
 
         // overflow is desired, casting never truncates
         // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed));
-        price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed));
+        price0Average = FixedPoint.uq112x112(uint224((price0Cumulative - reserve0CumulativeLast) / timeElapsed));
+        price1Average = FixedPoint.uq112x112(uint224((price1Cumulative - reserve1CumulativeLast) / timeElapsed));
 
-        price0CumulativeLast = price0Cumulative;
-        price1CumulativeLast = price1Cumulative;
+        reserve0CumulativeLast = price0Cumulative;
+        reserve1CumulativeLast = price1Cumulative;
         blockTimestampLast = blockTimestamp;
 
         emit Updated(price0Cumulative, price1Cumulative);
@@ -673,11 +673,11 @@ contract Oracle is Epoch {
         (uint256 price0Cumulative, uint256 price1Cumulative, uint32 blockTimestamp) = UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (_token == token0) {
-            _amountOut = FixedPoint.uq112x112(uint224((price0Cumulative - price0CumulativeLast) / timeElapsed)).mul(_amountIn).decode144();
+            _amountOut = FixedPoint.uq112x112(uint224((price0Cumulative - reserve0CumulativeLast) / timeElapsed)).mul(_amountIn).decode144();
         } else if (_token == token1) {
-            _amountOut = FixedPoint.uq112x112(uint224((price1Cumulative - price1CumulativeLast) / timeElapsed)).mul(_amountIn).decode144();
+            _amountOut = FixedPoint.uq112x112(uint224((price1Cumulative - reserve1CumulativeLast) / timeElapsed)).mul(_amountIn).decode144();
         }
     }
 
-    event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);
+    event Updated(uint256 reserve0CumulativeLast, uint256 reserve1CumulativeLast);
 }
