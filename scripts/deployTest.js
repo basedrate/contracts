@@ -259,17 +259,20 @@ const setParameters = async () => {
     500
   );
   receipt = await tx.wait();
-  // console.log('\n*** SETTING ORACLE in BASERATE ***');
-  // tx = await baseRate.setOracle(oracle.address);
-  // console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
-  // tx = await baseRate.excludeAddress(treasury.address)
-  // receipt = await tx.wait();
-  // tx = await baseRate.excludeAddress(boardroom.address)
-  // receipt = await tx.wait();
-  // tx = await baseRate.excludeAddress(communityFund.address)
-  // receipt = await tx.wait();
-  // tx = await baseRate.excludeAddress(teamDistributor.address)
-  // receipt = await tx.wait();
+  console.log('\n*** SETTING ORACLE in BASERATE ***');
+  tx = await baseRate.setOracle(oracle.address);
+  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
+  tx = await baseRate.excludeAddress(treasury.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(boardroom.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(communityFund.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(teamDistributor.address)
+  receipt = await tx.wait();
+  tx = await baseRate.enableAutoCalculateTax()
+  receipt = await tx.wait();
+  console.log('\n*** TAX ENABLED ***');
 };
 
 const setOperators = async () => {
@@ -370,6 +373,65 @@ const allocateSeigniorage = async () => {
   );
 };
 
+
+  const createRoute = (from, to, factory) => {
+    return {
+      from: from,
+      to: to,
+      factory: factory,
+      feeOnTransfer: true
+    };
+  };
+
+const buyBRATEBSHARE = async (amount) => {
+  console.log('\n*** BUYING BRATE AND BSHARE ***');
+  const baseRateRoute = createRoute(WETH, baseRate.address, AerodromeFactory); 
+  const baseShareRoute = createRoute(WETH, baseShare.address, AerodromeFactory);
+
+  try {
+    console.log(
+      'BRATE Balance before:',
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    );
+
+    const tx = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+      0,
+      [baseRateRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400,
+      { value: utils.parseEther(amount.toString()) }
+    );
+    await tx.wait();
+
+    console.log(
+      'BRATE Balance after:',
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    );
+
+    console.log(
+      'BSHARE Balance before:',
+      utils.formatEther(await baseShare.balanceOf(deployer.address))
+    );
+
+    const tx2 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+      0,
+      [baseShareRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400,
+      { value: utils.parseEther(amount.toString()) }
+    );
+    await tx2.wait();
+  
+    console.log(
+      'BSHARE Balance after:',
+      utils.formatEther(await baseShare.balanceOf(deployer.address))
+    );
+    
+  } catch (error) {
+    console.error("Error in buyBRATEBSHARE:", error);
+  }
+};
+
 const main = async () => {
   await setAddresses();
   await deployContracts();
@@ -387,6 +449,12 @@ const main = async () => {
   // test logic
   await time.increase(360 + 6 * 3600);
   await allocateSeigniorage();
+  await time.increase(360 + 6 * 3600);
+  await allocateSeigniorage();
+  await time.increase(360 + 6 * 3600);
+  await allocateSeigniorage();
+
+  await buyBRATEBSHARE(1);
 };
 
 main()
