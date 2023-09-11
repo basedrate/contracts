@@ -1243,7 +1243,7 @@ contract Treasury is ContractGuard {
         boardroom = _boardroom;
         startTime = _startTime;
 
-        baseRatePriceOne = 10 ** 15; // This is to allow a PEG of 1000 BRATE per ETH
+        baseRatePriceOne = 10 ** 18; // This is to allow a PEG of 1 BRATE per ETH
         baseRatePriceCeiling = baseRatePriceOne.mul(101).div(100);
 
         // Dynamic max expansion percent

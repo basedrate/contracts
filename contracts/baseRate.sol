@@ -27,7 +27,7 @@ contract BaseRate is ERC20Burnable, Operator {
     uint256 public taxRate;
 
     // Tax Tiers
-    uint256[] public taxTiersTwaps = [0, 5e14, 6e14, 7e14, 8e14, 9e14, 9.5e14, 1e15, 1.05e15, 1.10e15, 1.20e15, 1.30e15, 1.40e15, 1.50e15];
+    uint256[] public taxTiersTwaps = [0, 5e17, 6e17, 7e17, 8e17, 9e17, 9.5e17, 1e18, 1.05e18, 1.10e18, 1.20e18, 1.30e18, 1.40e18, 1.50e18];
     uint256[] public taxTiersRates = [2000, 1900, 1800, 1700, 1600, 1500, 1500, 1500, 1500, 1400, 900, 400, 200, 100];
 
     // Sender addresses excluded from Tax
