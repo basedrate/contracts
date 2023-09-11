@@ -57,7 +57,6 @@ contract BaseShareRewardPool is ReentrancyGuard {
 
     IERC20 public baseShare;
     bool public started;
-    address public communityFund;
 
     // Info of each pool.
     PoolInfo[] public poolInfo;
@@ -96,18 +95,15 @@ contract BaseShareRewardPool is ReentrancyGuard {
     constructor(
         address _baseShare,
         uint256 _poolStartTime,
-        address _feeAddress,
-        address _communityFund
+        address _feeAddress
     ) {
         require(block.timestamp < _poolStartTime, "late");
         require(_feeAddress != address(0), "zero address not allowed");
-        require(_communityFund != address(0), "zero address not allowed");
         feeAddress = _feeAddress;
         if (_baseShare != address(0)) baseShare = IERC20(_baseShare);
         poolStartTime = _poolStartTime;
         poolEndTime = poolStartTime + runningTime;
         operator = msg.sender;
-        communityFund = _communityFund;
     }
 
     function initializer() public onlyOperator {
@@ -540,7 +536,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
           IERC20 rewardToken = IERC20(pool.gauge.rewardToken());
           pool.gauge.getReward(address(this));
           uint256 amoutToSend = rewardToken.balanceOf(address(this));
-          rewardToken.safeTransfer(communityFund, amoutToSend);
+          rewardToken.safeTransfer(feeAddress, amoutToSend);
     }
 
     function setOperator(address _operator) external onlyOperator {
@@ -550,11 +546,6 @@ contract BaseShareRewardPool is ReentrancyGuard {
     function setFeeAddress(address _feeAddress) external onlyOperator {
         require(_feeAddress != address(0), "zero address not allowed");
         feeAddress = _feeAddress;
-    }
-
-    function setCommunityFundAddress(address _communityFund) external onlyOperator {
-        require(_communityFund != address(0), "zero address not allowed");
-        communityFund = _communityFund;
     }
 
     function getPoolView(uint256 pid) public view returns (PoolView memory) {
