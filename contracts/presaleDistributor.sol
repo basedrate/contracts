@@ -43,14 +43,13 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     function Claim() public nonReentrant {
         address user = msg.sender;
         require(users[user].lastClaimTime != 0,"invalid lastClaimTime");
-        uint256 pendingShareAmount = pendingShare(user);
-        uint256 pendingRateAmount = pendingRate(user);
         uint256 brateClaimed = users[user].brateClaimed;
         uint256 brateBought = users[user].brateBought;
         uint256 bshareClaimed = users[user].bshareClaimed;
         uint256 bshareBought = users[user].bshareBought;
         require((brateBought + bshareBought) > 0, "you have no tokens to claim!");
 
+        uint256 pendingRateAmount = pendingRate(user);
         if (brateClaimed == brateBought) {
         pendingRateAmount = 0;    
         }
@@ -58,6 +57,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         pendingRateAmount = brateBought - brateClaimed;
         }
         
+        uint256 pendingShareAmount = pendingShare(user);
         if (bshareClaimed == bshareBought) {
         pendingShareAmount = 0;    
         }
