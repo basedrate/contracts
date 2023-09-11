@@ -259,17 +259,17 @@ const setParameters = async () => {
     500
   );
   receipt = await tx.wait();
-  console.log('\n*** SETTING ORACLE in BASERATE ***');
-  tx = await baseRate.setOracle(oracle.address);
-  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
-  tx = await baseRate.excludeAddress(treasury.address)
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(boardroom.address)
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(communityFund.address)
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(teamDistributor.address)
-  receipt = await tx.wait();
+  // console.log('\n*** SETTING ORACLE in BASERATE ***');
+  // tx = await baseRate.setOracle(oracle.address);
+  // console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
+  // tx = await baseRate.excludeAddress(treasury.address)
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(boardroom.address)
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(communityFund.address)
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(teamDistributor.address)
+  // receipt = await tx.wait();
 };
 
 const setOperators = async () => {
@@ -329,6 +329,47 @@ const setRewardPoolAndInitialize = async () => {
 
 };
 
+const stakeBSHAREINBoardroom = async () => {
+  console.log('\n*** STAKING BSHARE IN BOARDROOM ***');
+  tx = await baseShare
+    .connect(deployer)
+    .approve(boardroom.address, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  const stakeAmount = ethers.utils.parseEther("1");
+  tx = await boardroom.connect(deployer).stake(stakeAmount);
+  receipt = await tx.wait();
+};
+
+const allocateSeigniorage = async () => {
+  console.log('\n*** ALLOCATING SEIGNORAGE ***');
+  console.log(
+    'BRATE Balance TeamDistributor Before:',
+    utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
+  );
+  console.log(
+    'BRATE Balance Community Fund Before:',
+    utils.formatEther(await baseRate.balanceOf(communityFund.address))
+  );
+  console.log(
+    'BRATE Balance Boardroom Before:',
+    utils.formatEther(await baseRate.balanceOf(boardroom.address))
+  );
+  tx = await treasury.allocateSeigniorage();
+  receipt = await tx.wait();
+  console.log(
+    'BRATE Balance TeamDistributor After:',
+    utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
+  );
+  console.log(
+    'BRATE Balance Community Fund After:',
+    utils.formatEther(await baseRate.balanceOf(communityFund.address))
+  );
+  console.log(
+    'BRATE Balance Boardroom After:',
+    utils.formatEther(await baseRate.balanceOf(boardroom.address))
+  );
+};
+
 const main = async () => {
   await setAddresses();
   await deployContracts();
@@ -341,6 +382,11 @@ const main = async () => {
   await setOperators();
   await setRewardPoolAndInitialize();
   await updateOracle();
+  await stakeBSHAREINBoardroom();
+
+  // test logic
+  await time.increase(360 + 6 * 3600);
+  await allocateSeigniorage();
 };
 
 main()

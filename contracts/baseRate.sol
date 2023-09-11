@@ -208,7 +208,6 @@ contract BaseRate is ERC20Burnable, Operator {
         return true;
     }
 
-     // LP pairs is taxed to prevent circumvention. Direct transfers between wallets and contracts remain tax-exempt.
      function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
         uint256 currentTaxRate = 0;
         address sender = msg.sender;
@@ -219,13 +218,11 @@ contract BaseRate is ERC20Burnable, Operator {
         if (!autoCalculateTax) {
             currentTaxRate = taxRate;
         }
-        if (currentTaxRate == 0) {
-            _transfer(sender, recipient, amount);
-        }
-        if (isLP[recipient] || isLP[sender]) {
+        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0) {
         _transferWithTax(recipient, amount);
         
-        } else {
+        }
+        else {
         _transfer(sender, recipient, amount);
         }
         return true;
