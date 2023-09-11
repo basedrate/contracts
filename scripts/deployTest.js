@@ -35,6 +35,10 @@ const Presale = '0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659';
 const AerodromeRouter = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
 const AerodromeFactory = '0x420dd381b31aef6683db6b902084cb0ffece40da';
 const WETH = '0x4200000000000000000000000000000000000006';
+const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
+const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
+const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75'; 
+const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b'; 
 
 const AerodromeRouterContract = new ethers.Contract(
   AerodromeRouter,
@@ -267,6 +271,17 @@ const setParameters = async () => {
     500
   );
   receipt = await tx.wait();
+  console.log('\n*** SETTING ORACLE in BASERATE ***');
+  tx = await baseRate.setOracle(oracle.address);
+  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
+  tx = await baseRate.excludeAddress(treasury.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(boardroom.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(communityFund.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(teamDistributor.address)
+  receipt = await tx.wait();
 };
 
 const setOperators = async () => {
@@ -290,7 +305,7 @@ const setRewardPoolAndInitialize = async () => {
   receipt = await tx.wait();
 
   console.log('\n*** SETTING REWARD POOL ***');
-  
+
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
     WETH,
@@ -313,8 +328,15 @@ const setRewardPoolAndInitialize = async () => {
   console.log('\nBRATE_ETH_LP added');
   tx = await baseShareRewardPool.add(1000, BSHARE_ETH_LP, true, startTime, 0, false, baseShareRewardPool.address);
   receipt = await tx.wait();
-  console.log('\BSHARE_ETH_LP added');
+  console.log('\nBSHARE_ETH_LP added');
 
+  tx = await baseShareRewardPool.add(1000, WETH_USDbC, true, startTime, 0, true, WETH_USDbC_GAUGE);
+  receipt = await tx.wait();
+  console.log('\nWETH_USDbC added');
+
+  tx = await baseShareRewardPool.add(1000, AERO_USDbC, true, startTime, 0, true, AERO_USDbC_GAUGE);
+  receipt = await tx.wait();
+  console.log('\AERO_USDbC added');
 
 };
 
@@ -330,6 +352,7 @@ const main = async () => {
   await setParameters();
   await setOperators();
   await setRewardPoolAndInitialize();
+  await updateOracle();
 };
 
 main()
