@@ -18,11 +18,7 @@ let tx, receipt; //transactions
 let deployer,
   devWallet,
   BRATE_ETH_LP,
-  BSHARE_ETH_LP,
-  BRATE_BSHARE_LP,
-  ETH_USDbC_LP,
-  BRATE_USDbC_LP,
-  BSHARE_USDbC_LP; //addresses
+  BSHARE_ETH_LP; //addresses
 let baseRate,
   baseShare,
   baseBond,
@@ -287,6 +283,41 @@ const setOperators = async () => {
   receipt = await tx.wait();
 };
 
+
+const setRewardPoolAndInitialize = async () => {
+  console.log('\n*** INITIALIZING REWARD POOL CONTRACT ***');
+  tx = await baseShareRewardPool.initializer();
+  receipt = await tx.wait();
+
+  console.log('\n*** SETTING REWARD POOL ***');
+  
+  const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseShare.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
+  console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
+
+  tx = await baseShareRewardPool.add(1000, BRATE_ETH_LP, true, startTime, 0, false,baseShareRewardPool.address);
+  receipt = await tx.wait();
+  console.log('\nBRATE_ETH_LP added');
+  tx = await baseShareRewardPool.add(1000, BSHARE_ETH_LP, true, startTime, 0, false, baseShareRewardPool.address);
+  receipt = await tx.wait();
+  console.log('\BSHARE_ETH_LP added');
+
+
+};
+
 const main = async () => {
 
   await setAddresses();
@@ -298,6 +329,7 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
+  await setRewardPoolAndInitialize();
 };
 
 main()
