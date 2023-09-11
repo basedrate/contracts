@@ -173,15 +173,26 @@ const mintInitialSupplyAndAddLiquidity = async () => {
   tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
   receipt = await tx.wait();
   tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
-    baseRate.address,
-    true,
-    supplyBRATEETH,
+    baseShare.address,
+    false,
+    supplyBSHAREETH,
     0,
     0,
     deployer.address,
     Math.floor(Date.now() / 1000 + 86400),
-    { value: ETHforBRATELiquidity }
+    { value: ETHforBSHARELiquidity }
 );
+
+//   tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
+//     baseRate.address,
+//     true,
+//     supplyBRATEETH,
+//     0,
+//     0,
+//     deployer.address,
+//     Math.floor(Date.now() / 1000 + 86400),
+//     { value: ETHforBRATELiquidity }
+// );
 };
 
 const main = async () => {
