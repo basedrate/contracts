@@ -36,9 +36,26 @@ let baseRate,
 let presaleContractBalance; //values
 
 const Presale = '0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659';
+const AerodromeRouter = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
+const AerodromeFactory = '0x420dd381b31aef6683db6b902084cb0ffece40da';
+
+const AerodromeRouterContract = new ethers.Contract(
+  AerodromeRouter,
+  RouterABI,
+  provider
+);
 
 // const startTime = 1687219200; //2023-06-20 at 00:00 UTC TO CHECK
 const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
+
+const supplyBRATEETH = utils.parseEther("20000");
+const supplyBSHAREETH = utils.parseEther('20');
+const ETHforBRATELiquidity = utils.parseEther('25');
+const ETHforBSHARELiquidity = utils.parseEther('25');
+const supplyBRATEforBRATEBSHARE = utils.parseEther("20000");
+const supplyBSHAREforBRATEBSHARE = utils.parseEther('20');
+const supplyBRATEForPresale = utils.parseEther("27497.799");
+const supplyBSHAREForPresale = utils.parseEther('27.497799');
 
 // const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
 const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
@@ -120,6 +137,7 @@ presaleDistributor = await PresaleDistributorFactory.deploy(
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
 };
 
+
 const withdrawFromPresale = async () => {
   console.log('\n*** WITHDRAWING FROM PRESALE ***');
   presaleContractBalance = await PresaleContract.checkContractBalance();
@@ -135,10 +153,44 @@ const withdrawFromPresale = async () => {
 };
 
 
+const mintInitialSupplyAndAddLiquidity = async () => {
+  console.log('\n*** MINTING INITIAL SUPPLY ***');
+  tx = await baseRate.distributeReward(deployer.address);
+  receipt = await tx.wait();
+  console.log(
+    'BRATE Balance:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  tx = await baseShare.distributeReward(baseShareRewardPool.address);
+  receipt = await tx.wait();
+  console.log(
+    'BSHARE Balance:',
+    utils.formatEther(await baseShare.balanceOf(deployer.address))
+  );
+  console.log('\n*** ADDING LIQUIDITY ***');
+  tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
+    baseRate.address,
+    true,
+    supplyBRATEETH,
+    0,
+    0,
+    deployer.address,
+    Math.floor(Date.now() / 1000 + 86400),
+    { value: ETHforBRATELiquidity }
+);
+};
+
 const main = async () => {
   await setAddresses();
   await deployContracts();
   await withdrawFromPresale();
+  await mintInitialSupplyAndAddLiquidity();
+
+  
 };
 
 main()
