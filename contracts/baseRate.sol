@@ -16,8 +16,8 @@ contract BaseRate is ERC20Burnable, Operator {
     address public oracle;
 
     // Initial presale distribution
-    uint256 public constant INITIAL_PRESALE_DISTRIBUTION = 15e6 ether;
-    uint256 public constant INITIAL_LIQUIDITY_DISTRIBUTION = 25e6 ether;
+    uint256 public constant INITIAL_PRESALE_DISTRIBUTION = 33.75 ether;
+    uint256 public constant INITIAL_LIQUIDITY_DISTRIBUTION = 25 ether;
 
     // Should the taxes be calculated using the tax tiers
     bool public autoCalculateTax;
