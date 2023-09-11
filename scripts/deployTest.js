@@ -48,7 +48,7 @@ const AerodromeRouterContract = new ethers.Contract(
 // const startTime = 1687219200; //2023-06-20 at 00:00 UTC TO CHECK
 const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
 
-const supplyBRATEETH = utils.parseEther("20000");
+const supplyBRATEETH = utils.parseEther("25");
 const supplyBSHAREETH = utils.parseEther('20');
 const ETHforBRATELiquidity = utils.parseEther('25');
 const ETHforBSHARELiquidity = utils.parseEther('25');
@@ -183,16 +183,17 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     { value: ETHforBSHARELiquidity }
 );
 
-//   tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
-//     baseRate.address,
-//     true,
-//     supplyBRATEETH,
-//     0,
-//     0,
-//     deployer.address,
-//     Math.floor(Date.now() / 1000 + 86400),
-//     { value: ETHforBRATELiquidity }
-// );
+  tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
+    baseRate.address,
+    true,
+    supplyBRATEETH,
+    0,
+    0,
+    deployer.address,
+    Math.floor(Date.now() / 1000 + 86400),
+    { value: ETHforBRATELiquidity }
+);
+
 };
 
 const main = async () => {
