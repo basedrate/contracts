@@ -16,9 +16,7 @@ const provider = ethers.provider;
 
 let tx, receipt; //transactions
 let deployer,
-  devWallet,
-  BRATE_ETH_LP,
-  BSHARE_ETH_LP; //addresses
+  devWallet
 let baseRate,
   baseShare,
   baseBond,
@@ -147,17 +145,7 @@ const deployOracle = async () => {
     true,
     AerodromeFactory
   );
-
-  const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
-    baseShare.address,
-    WETH,
-    true,
-    AerodromeFactory
-  );
-
-  console.log("BRATE_ETH_LP ", BRATE_ETH_LP)
-  console.log("BSHARE_ETH_LP ", BSHARE_ETH_LP)
-  
+ 
   const Oracle = await ethers.getContractFactory('Oracle', deployer);
   oracle = await Oracle.deploy(BRATE_ETH_LP, 6 * 60 * 60, startTime);
   await oracle.deployed();
@@ -320,9 +308,6 @@ const setRewardPoolAndInitialize = async () => {
     AerodromeFactory
   );
 
-  console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
-  console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
-
   tx = await baseShareRewardPool.add(1000, BRATE_ETH_LP, true, startTime, 0, false,baseShareRewardPool.address);
   receipt = await tx.wait();
   console.log('\nBRATE_ETH_LP added');
@@ -336,12 +321,15 @@ const setRewardPoolAndInitialize = async () => {
 
   tx = await baseShareRewardPool.add(1000, AERO_USDbC, true, startTime, 0, true, AERO_USDbC_GAUGE);
   receipt = await tx.wait();
-  console.log('\AERO_USDbC added');
+  console.log('\nAERO_USDbC added');
+
+
+  console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
+  console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
 
 };
 
 const main = async () => {
-
   await setAddresses();
   await deployContracts();
   await withdrawFromPresale();
