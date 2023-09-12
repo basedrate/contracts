@@ -752,7 +752,7 @@ const main = async () => {
   await allocateSeigniorage();
   await buyAERO_USDbC(1);
   await testTransferFee();
-  await disableTax()
+  // await disableTax()
   await AddLiquidityEthUSDC();
   await stakeInSharePool();
   await time.increase(360 + 6 * 3600);
