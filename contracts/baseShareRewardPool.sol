@@ -296,11 +296,24 @@ contract BaseShareRewardPool is ReentrancyGuard {
     function deposit(uint256 _pid, uint256 _amount, address referrer) public nonReentrant() {
         PoolInfo storage pool = poolInfo[_pid];
         bool isGauge = pool.hasGauge;
+        address staker = msg.sender;
         if(isGauge){
-        _depositWithGauge(_pid,_amount,referrer);   
+        _depositWithGauge(_pid,_amount,referrer, staker);   
         }
         else {
-        _depositNoGauge(_pid,_amount,referrer);       
+        _depositNoGauge(_pid,_amount,referrer, staker);       
+        }
+    }
+
+    function depositOnBehalfOf(uint256 _pid, uint256 _amount, address referrer, address _staker) public nonReentrant() {
+        PoolInfo storage pool = poolInfo[_pid];
+        bool isGauge = pool.hasGauge;
+        address staker = _staker;
+        if(isGauge){
+        _depositWithGauge(_pid,_amount,referrer, staker);   
+        }
+        else {
+        _depositNoGauge(_pid,_amount,referrer, staker);       
         }
     }
 
@@ -315,9 +328,9 @@ contract BaseShareRewardPool is ReentrancyGuard {
         }
     }
 
-    function _depositNoGauge(uint256 _pid, uint256 _amount, address referrer) private {
+    function _depositNoGauge(uint256 _pid, uint256 _amount, address referrer, address _staker) private {
         require(started, "contract not initialized");
-        address _sender = msg.sender;
+        address _sender = _staker;
         require(
             referrer != address(0) &&
                 referrer != _sender &&
@@ -368,9 +381,9 @@ contract BaseShareRewardPool is ReentrancyGuard {
         emit Deposit(_sender, _pid, _amount);
     }
 
-    function _depositWithGauge(uint256 _pid, uint256 _amount, address referrer) private {
+    function _depositWithGauge(uint256 _pid, uint256 _amount, address referrer, address _staker) private {
         require(started, "contract not initialized");
-        address _sender = msg.sender;
+        address _sender = _staker;
         require(
             referrer != address(0) &&
                 referrer != _sender &&

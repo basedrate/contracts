@@ -546,7 +546,6 @@ const testTransferFee = async () => {
     };
   };
 
-
 const buyAERO_USDbC = async (amount) => {
   console.log('\n*** BUYING AERO AND USDbC ***');
   const AERORoute = createRoute(WETH, AERO, AerodromeFactory); 
@@ -582,9 +581,6 @@ const buyAERO_USDbC = async (amount) => {
     console.error("Error in buy Tokens:", error);
   }
 };
-
-
-
 
 const buyBRATEBSHARE = async (amount) => {
   console.log('\n*** BUYING BRATE AND BSHARE ***');
@@ -636,7 +632,6 @@ const buyBRATEBSHARE = async (amount) => {
   }
 };
 
-
 const main = async () => {
   await setAddresses();
   await deployContracts();
@@ -663,7 +658,6 @@ const main = async () => {
   await buyBRATEBSHARE(1);
  
 };
-
 
 main()
   .then(() => process.exit(0))
