@@ -40,6 +40,18 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         bshare = IERC20(_bshare);
     }
 
+    function getTotalValues() external view returns (uint256 totalBrateBought, uint256 totalBshareBought, uint256 totalBrateClaimed, uint256 totalBshareClaimed) {
+    uint256 userCount = basedRateSale.userCount();
+    for(uint256 i = 0; i < userCount; i++) {
+        address currentUser = basedRateSale.userIndex(i);
+        totalBrateBought += users[currentUser].brateBought;
+        totalBshareBought += users[currentUser].bshareBought;
+        totalBrateClaimed += users[currentUser].brateClaimed;
+        totalBshareClaimed += users[currentUser].bshareClaimed;
+    }
+    }
+
+
     function Claim() public nonReentrant {
         address user = msg.sender;
         require(users[user].lastClaimTime != 0,"invalid lastClaimTime");

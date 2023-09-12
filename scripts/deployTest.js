@@ -9,6 +9,7 @@ const ERC20ABI = require('@uniswap/v2-core/build/IERC20.json').abi;
 const PresaleABI = [
   'function WithdrawETHcall(uint256 amount) external',
   'function checkContractBalance() external view returns(uint256)',
+  'function userCount() external view returns(uint256)',
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
@@ -70,7 +71,7 @@ const setAddresses = async () => {
   console.log('\n*** SETTING ADDRESSES ***');
   // [deployer, oldDevWallet] = await ethers.getSigners();
   deployer = await ethers.getImpersonatedSigner(
-    '0xF53B5822De2dd55b651712e58ABB8a72367eF92a'
+    '0xadf9152100c536e854e0ed7a3e0e60275cef7e7d'
   );
   oldDevWallet = await ethers.getImpersonatedSigner(
     '0xc92879d115fa23d6d7da27946f0dab96ea2db706'
@@ -688,6 +689,35 @@ console.log(' WETH_USDbC LP ', LPbalance);
 
 };
 
+const sendBRATEAndBSHAREToPresaleDistributor = async () => {
+  console.log('\n*** SENDING PRATE AND PSHARE TO PRESALE DISTRIBUTOR ***');
+  tx = await baseRate.transfer(
+    presaleDistributor.address,
+    supplyBRATEForPresale
+  );
+  receipt = await tx.wait();
+  tx = await baseShare.transfer(
+    presaleDistributor.address,
+    supplyBSHAREForPresale
+  );
+  receipt = await tx.wait();
+  console.log(
+    'BRATE Balance:',
+    utils.formatEther(await baseRate.balanceOf(presaleDistributor.address))
+  );
+  console.log(
+    'BSHARE Balance:',
+    utils.formatEther(await baseShare.balanceOf(presaleDistributor.address))
+  );
+
+  const presaleContractuserCount = await PresaleContract.userCount();
+  const userCountAsInt = parseInt(presaleContractuserCount.toString(), 10);
+  console.log("presaleContractuserCount", userCountAsInt);
+  tx = await presaleDistributor.updateAllUsers();
+  const values = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values);
+  receipt = await tx.wait();
+};
 
 const buyBRATEBSHARE = async (amount) => {
   console.log('\n*** BUYING BRATE AND BSHARE ***');
@@ -741,18 +771,18 @@ const buyBRATEBSHARE = async (amount) => {
 const main = async () => {
   await setAddresses();
   await withdrawFromPresale();
-
   await deployContracts();
-  // send to presaleDistributor and add wallets
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();
   await setOperators();
+  await sendBRATEAndBSHAREToPresaleDistributor();
   await setRewardPoolAndInitialize();
   await updateOracle();
   await stakeBSHAREINBoardroom();
+
 
   // test logic
   await time.increase(360 + 6 * 3600);
@@ -762,7 +792,7 @@ const main = async () => {
   await time.increase(360 + 6 * 3600);
   await allocateSeigniorage();
   await buyAERO_USDbC(1);
-  await testTransferFee();
+  // await testTransferFee();
   // await disableTax()
   await AddLiquidityEthUSDC();
   await stakeInSharePool();

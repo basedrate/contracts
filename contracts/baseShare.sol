@@ -12,7 +12,7 @@ contract BaseShare is ERC20Burnable, Operator {
     // TOTAL MAX SUPPLY ≈ 4,100 BSHARE
     uint256 public constant FARMING_POOL_REWARD_ALLOCATION = 3150 ether;
     uint256 public constant PRESALE_ALLOCATION = 27.497799 ether;
-    uint256 public constant LIQUIDITY_ALLOCATION = 20 ether;
+    uint256 public constant LIQUIDITY_ALLOCATION = 21 ether; // plus one
     uint256 public constant COMMUNITY_FUND_POOL_ALLOCATION = 200 ether;
     uint256 public constant DEV_FUND_POOL_ALLOCATION = 400 ether;
     uint256 public constant VESTING_DURATION = 300 days;
