@@ -335,6 +335,10 @@ const setRewardPoolAndInitialize = async () => {
   console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
   console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
 
+  tx = await baseRate.setLP(BRATE_ETH_LP,true)
+  receipt = await tx.wait();
+  console.log("BRATE_ETH_LP added as LP")
+
 };
 
 const stakeBSHAREINBoardroom = async () => {
@@ -476,6 +480,61 @@ const testTransferFee = async () => {
     'BRATE allowance After:',
     utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
   );
+
+  console.log('\n*** TRANSFER WITH FEE 1 ETH TO DEAD ADDRESS ***');
+  const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  console.log(
+    'BRATE Balance Deployer Before:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead Before:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+
+
+  const tx6 = await baseRate.connect(deployer).transfer(AddressDead, utils.parseEther("1"))
+  await tx6.wait();
+
+  console.log(
+    'BRATE Balance Deployer AFTER:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead AFTER:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+
+  console.log('\n*** TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***');
+  console.log(
+    'BRATE Balance Deployer Before:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log(
+    'BRATE Balance Before BRATE_ETH_LP:',
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  const tx7 = await baseRate.connect(deployer).transfer(BRATE_ETH_LP, utils.parseEther("1"))
+  await tx7.wait();
+
+  console.log(
+    'BRATE Balance AFTER BRATE_ETH_LP:',
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  console.log(
+    'BRATE Balance Deployer AFTER:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
 }
 
   const createRoute = (from, to, factory) => {
@@ -602,9 +661,9 @@ const main = async () => {
   await buyAERO_USDbC(1);
   await testTransferFee();
   await buyBRATEBSHARE(1);
-
  
 };
+
 
 main()
   .then(() => process.exit(0))
