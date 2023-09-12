@@ -59,8 +59,6 @@ const supplyBSHAREETH = utils.parseEther('20');
 const ETH_TEST = utils.parseEther('1');
 const ETHforBRATELiquidity = utils.parseEther('25');
 const ETHforBSHARELiquidity = utils.parseEther('25');
-const supplyBRATEforBRATEBSHARE = utils.parseEther("20");
-const supplyBSHAREforBRATEBSHARE = utils.parseEther('20');
 const supplyBRATEForPresale = utils.parseEther("37.125");
 const supplyBSHAREForPresale = utils.parseEther('27.497799');
 
@@ -278,7 +276,7 @@ const setParameters = async () => {
   receipt = await tx.wait();
   console.log('\n*** SETTING ORACLE in BASERATE ***');
   tx = await baseRate.setOracle(oracle.address);
-  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor  ***');  
+  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor, presaleDistributor  ***');  
   tx = await baseRate.excludeAddress(treasury.address)
   receipt = await tx.wait();
   tx = await baseRate.excludeAddress(boardroom.address)
@@ -286,6 +284,8 @@ const setParameters = async () => {
   tx = await baseRate.excludeAddress(communityFund.address)
   receipt = await tx.wait();
   tx = await baseRate.excludeAddress(teamDistributor.address)
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(presaleDistributor.address)
   receipt = await tx.wait();
   tx = await baseRate.enableAutoCalculateTax()
   receipt = await tx.wait();
@@ -743,6 +743,7 @@ const main = async () => {
   await withdrawFromPresale();
 
   await deployContracts();
+  // send to presaleDistributor and add wallets
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
   await initializeBoardroom();

@@ -150,6 +150,18 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         users[_user].lastClaimTime = startTime;
     }
 
+    function updateUsers(uint _from, uint _to) external onlyOwner {
+            for(uint256 i = _from; i < _to; i++) {
+                address currentUser = basedRateSale.userIndex(i);
+                IBasedRateSale.UserData memory userData = basedRateSale.users(currentUser);
+                uint256 intermediateValue = userData.brateBought / 1000;
+                uint256 thirtyFivePercent = (intermediateValue * 35) / 100;
+                users[currentUser].brateBought = intermediateValue + thirtyFivePercent;
+                users[currentUser].bshareBought = userData.bshareBought;
+                users[currentUser].lastClaimTime = startTime;
+            }
+    }
+
     function updateAllUsers() external onlyOwner {
         uint256 totalUsers = basedRateSale.userCount();
         for(uint256 i = 0; i < totalUsers; i++) {
