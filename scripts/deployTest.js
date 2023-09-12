@@ -36,6 +36,11 @@ const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
 const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
 const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75'; 
 const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b'; 
+const AERO = '0x940181a94A35A4569E4529A3CDfB74e38FD98631'; 
+const USDbC = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA'; 
+
+const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
+const AEROCContract = new ethers.Contract(AERO, ERC20ABI, provider);
 const AddressDead = "0x000000000000000000000000000000000000dead";
 
 const AerodromeRouterContract = new ethers.Contract(
@@ -483,6 +488,45 @@ const testTransferFee = async () => {
   };
 
 
+const buyAERO_USDbC = async (amount) => {
+  console.log('\n*** BUYING AERO AND USDbC ***');
+  const AERORoute = createRoute(WETH, AERO, AerodromeFactory); 
+  const USDbCRoute = createRoute(WETH, USDbC, AerodromeFactory);
+
+  try {
+    const tx0 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+      0,
+      [AERORoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400,
+      { value: utils.parseEther(amount.toString()) }
+    );
+    await tx0.wait();
+    const tx1 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+      0,
+      [USDbCRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400,
+      { value: utils.parseEther(amount.toString()) }
+    );
+    await tx1.wait();
+    console.log(
+      'AERO Balance Deployer after:',
+      utils.formatEther(await AEROCContract.balanceOf(deployer.address))
+    );
+    console.log(
+      'USDbC Balance Deployer after:',
+      utils.formatEther(await USDbCContract.balanceOf(deployer.address))
+    );
+
+  } catch (error) {
+    console.error("Error in buy Tokens:", error);
+  }
+};
+
+
+
+
 const buyBRATEBSHARE = async (amount) => {
   console.log('\n*** BUYING BRATE AND BSHARE ***');
   const baseRateRoute = createRoute(WETH, baseRate.address, AerodromeFactory); 
@@ -533,6 +577,7 @@ const buyBRATEBSHARE = async (amount) => {
   }
 };
 
+
 const main = async () => {
   await setAddresses();
   await deployContracts();
@@ -554,8 +599,11 @@ const main = async () => {
   await allocateSeigniorage();
   await time.increase(360 + 6 * 3600);
   await allocateSeigniorage();
+  await buyAERO_USDbC(1);
   await testTransferFee();
   await buyBRATEBSHARE(1);
+
+ 
 };
 
 main()
