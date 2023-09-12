@@ -360,7 +360,7 @@ const stakeInSharePool = async () => {
 
 
 const unStakeInSharePool = async () => {
-  console.log('\n*** STAKING IN SHAREPOOL ***');
+  console.log('\n*** UNSTAKING IN SHAREPOOL ***');
   let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
   console.log(' WETH_USDbC LP balance before ', LPbalance);
 
