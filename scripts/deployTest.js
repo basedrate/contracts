@@ -32,6 +32,7 @@ const Presale = '0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659';
 const AerodromeRouter = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
 const AerodromeFactory = '0x420dd381b31aef6683db6b902084cb0ffece40da';
 const WETH = '0x4200000000000000000000000000000000000006';
+const REF = '0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A';
 const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
 const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
 const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75'; 
@@ -39,6 +40,7 @@ const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b';
 const AERO = '0x940181a94A35A4569E4529A3CDfB74e38FD98631'; 
 const USDbC = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA'; 
 
+const WETH_USDbCContract = new ethers.Contract(WETH_USDbC, ERC20ABI, provider);
 const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
 const AEROCContract = new ethers.Contract(AERO, ERC20ABI, provider);
 const AddressDead = "0x000000000000000000000000000000000000dead";
@@ -54,6 +56,7 @@ const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
 
 const supplyBRATEETH = utils.parseEther("25");
 const supplyBSHAREETH = utils.parseEther('20');
+const ETH_TEST = utils.parseEther('1');
 const ETHforBRATELiquidity = utils.parseEther('25');
 const ETHforBSHARELiquidity = utils.parseEther('25');
 const supplyBRATEforBRATEBSHARE = utils.parseEther("20");
@@ -341,6 +344,64 @@ const setRewardPoolAndInitialize = async () => {
 
 };
 
+const stakeInSharePool = async () => {
+  console.log('\n*** STAKING IN SHAREPOOL ***');
+  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
+  console.log(' WETH_USDbC LP balance before ', LPbalance);
+  tx = await WETH_USDbCContract.connect(deployer).approve(baseShareRewardPool.address, ethers.constants.MaxUint256);
+
+  tx = await baseShareRewardPool.deposit(2,LPbalance,REF);
+  receipt = await tx.wait();
+
+  let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
+  console.log(' WETH_USDbC LP ', LPbalanceAfter);
+
+};
+
+
+const unStakeInSharePool = async () => {
+  console.log('\n*** STAKING IN SHAREPOOL ***');
+  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
+  console.log(' WETH_USDbC LP balance before ', LPbalance);
+
+  let lpBalanceForPool = (await baseShareRewardPool.poolInfo(2)).lpBalance;
+  console.log('GLOBAL LP Balance for Pool ID 2 before: ', lpBalanceForPool);
+
+  let userInfoForDeployer = await baseShareRewardPool.userInfo(2, deployer.address);
+  let amount = userInfoForDeployer.amount;
+  console.log('user Staked before', amount);
+
+  tx = await baseShareRewardPool.withdraw(2,amount);
+  receipt = await tx.wait();
+
+  let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
+  console.log(' WETH_USDbC LP ', LPbalanceAfter);
+
+  let userInfoForDeployerAfter = await baseShareRewardPool.userInfo(2, deployer.address);
+  let amountAfter = userInfoForDeployerAfter.amount;
+  console.log('user Staked after', amountAfter);
+
+  let lpBalanceForPoolAfter = (await baseShareRewardPool.poolInfo(2)).lpBalance;
+  console.log('GLOBAL LP Balance for Pool ID 2 before: ', lpBalanceForPoolAfter);
+
+};
+
+const collectExternalReward = async () => {
+  console.log('\n*** GETTING AERO FROM SHAREPOOL ***');
+  let Aerobalance = await AEROCContract.balanceOf(communityFund.address);
+  console.log(' AERO balance in communityFun before ', Aerobalance);
+
+
+  tx = await baseShareRewardPool.getExternalReward(2);
+  receipt = await tx.wait();
+
+  let AerobalanceAfter = await AEROCContract.balanceOf(communityFund.address);
+  console.log(' AERO balance in communityFund after ', AerobalanceAfter);
+
+};
+
+
+
 const stakeBSHAREINBoardroom = async () => {
   console.log('\n*** STAKING BSHARE IN BOARDROOM ***');
   tx = await baseShare
@@ -582,11 +643,47 @@ const buyAERO_USDbC = async (amount) => {
   }
 };
 
+const disableTax = async () => {
+  console.log('\n*** TAX DISABLED ***');
+  console.log("Tax before ",await baseRate.taxRate())
+
+  tx = await baseRate.disableAutoCalculateTax()
+  receipt = await tx.wait();
+  tx = await baseRate.setTaxRate(0)
+  receipt = await tx.wait();
+
+  console.log("Tax after ",await baseRate.taxRate())
+
+}
+
+
+const AddLiquidityEthUSDC = async () => {
+  console.log('\n*** ADDING LIQUIDITY ETH USDC ***');
+  let balanceUSDC = await USDbCContract.balanceOf(deployer.address);
+  console.log("balanceUSDC ", balanceUSDC)
+  tx = await USDbCContract.connect(deployer).approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
+    USDbC,
+    false,
+    balanceUSDC,
+    0,
+    0,
+    deployer.address,
+    Math.floor(Date.now() / 1000 + 86400),
+    { value: ETH_TEST }
+);
+let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
+
+console.log(' WETH_USDbC LP ', LPbalance);
+
+};
+
+
 const buyBRATEBSHARE = async (amount) => {
   console.log('\n*** BUYING BRATE AND BSHARE ***');
   const baseRateRoute = createRoute(WETH, baseRate.address, AerodromeFactory); 
   const baseShareRoute = createRoute(WETH, baseShare.address, AerodromeFactory);
-
   try {
 
     console.log(
@@ -655,7 +752,14 @@ const main = async () => {
   await allocateSeigniorage();
   await buyAERO_USDbC(1);
   await testTransferFee();
-  await buyBRATEBSHARE(1);
+  await disableTax()
+  await AddLiquidityEthUSDC();
+  await stakeInSharePool();
+  await time.increase(360 + 6 * 3600);
+  await collectExternalReward();
+  await unStakeInSharePool();
+
+  // await buyBRATEBSHARE(0.1);
  
 };
 
