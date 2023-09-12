@@ -10,7 +10,6 @@ const PresaleABI = [
   'function WithdrawETHcall(uint256 amount) external',
   'function checkContractBalance() external view returns(uint256)',
 ];
-
 const utils = ethers.utils;
 const provider = ethers.provider;
 
@@ -37,6 +36,7 @@ const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
 const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
 const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75'; 
 const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b'; 
+const AddressDead = "0x000000000000000000000000000000000000dead";
 
 const AerodromeRouterContract = new ethers.Contract(
   AerodromeRouter,
@@ -373,6 +373,105 @@ const allocateSeigniorage = async () => {
   );
 };
 
+const testTransferFee = async () => {
+  console.log('\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS ***');
+  console.log(
+    'BRATE Balance Deployer Before:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead Before:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx0 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  await tx0.wait();
+  console.log(
+    'BRATE allowance Before:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+  const tx1 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  await tx1.wait();
+  console.log(
+    'BRATE Balance Deployer after:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead after:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  console.log(
+    'BRATE allowance After:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+  console.log('\n*** TRANSFER_FROM WITHOUT FEE 1 ETH TO DEAD ADDRESS ***');
+  tx = await baseRate.disableAutoCalculateTax()
+  receipt = await tx.wait();
+  tx = await baseRate.setTaxRate(0)
+  receipt = await tx.wait();
+  console.log(
+    'BRATE Balance Deployer Before:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead Before:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx2 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  await tx2.wait();
+  console.log(
+    'BRATE allowance Before:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+  const tx3 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  await tx3.wait();
+  console.log(
+    'BRATE Balance Deployer after:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead after:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  console.log(
+    'BRATE allowance After:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+  tx = await baseRate.setTaxRate(1500)
+  receipt = await tx.wait();
+  tx = await baseRate.enableAutoCalculateTax()
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(AddressDead)
+  receipt = await tx.wait();
+  console.log('\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS EXCLUDED ***');
+  console.log(
+    'BRATE Balance Deployer Before:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead Before:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx4 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  await tx4.wait();
+  console.log(
+    'BRATE allowance Before:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+  const tx5 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  await tx5.wait();
+  console.log(
+    'BRATE Balance Deployer after:',
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    'BRATE Balance AddressDead after:',
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  console.log(
+    'BRATE allowance After:',
+    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+  );
+}
 
   const createRoute = (from, to, factory) => {
     return {
@@ -383,30 +482,13 @@ const allocateSeigniorage = async () => {
     };
   };
 
+
 const buyBRATEBSHARE = async (amount) => {
   console.log('\n*** BUYING BRATE AND BSHARE ***');
   const baseRateRoute = createRoute(WETH, baseRate.address, AerodromeFactory); 
   const baseShareRoute = createRoute(WETH, baseShare.address, AerodromeFactory);
 
   try {
-    console.log(
-      'BRATE Balance before:',
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-
-    const tx = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [baseRateRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx.wait();
-
-    console.log(
-      'BRATE Balance after:',
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
 
     console.log(
       'BSHARE Balance before:',
@@ -425,6 +507,25 @@ const buyBRATEBSHARE = async (amount) => {
     console.log(
       'BSHARE Balance after:',
       utils.formatEther(await baseShare.balanceOf(deployer.address))
+    );
+
+    console.log(
+      'BRATE Balance before:',
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    );
+
+    const tx = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+      0,
+      [baseRateRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400,
+      { value: utils.parseEther(amount.toString()) }
+    );
+    await tx.wait();
+
+    console.log(
+      'BRATE Balance after:',
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
     );
     
   } catch (error) {
@@ -453,7 +554,7 @@ const main = async () => {
   await allocateSeigniorage();
   await time.increase(360 + 6 * 3600);
   await allocateSeigniorage();
-
+  await testTransferFee();
   await buyBRATEBSHARE(1);
 };
 
