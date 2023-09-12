@@ -15,7 +15,7 @@ const provider = ethers.provider;
 
 let tx, receipt; //transactions
 let deployer,
-  devWallet
+  oldDevWallet
 let baseRate,
   baseShare,
   baseBond,
@@ -61,7 +61,7 @@ const ETHforBRATELiquidity = utils.parseEther('25');
 const ETHforBSHARELiquidity = utils.parseEther('25');
 const supplyBRATEforBRATEBSHARE = utils.parseEther("20");
 const supplyBSHAREforBRATEBSHARE = utils.parseEther('20');
-const supplyBRATEForPresale = utils.parseEther("27.497799");
+const supplyBRATEForPresale = utils.parseEther("37.125");
 const supplyBSHAREForPresale = utils.parseEther('27.497799');
 
 // const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
@@ -70,16 +70,17 @@ const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
 const setAddresses = async () => {
   console.log('\n*** SETTING ADDRESSES ***');
-  // [deployer] = await ethers.getSigners();
+  // [deployer, oldDevWallet] = await ethers.getSigners();
   deployer = await ethers.getImpersonatedSigner(
-    '0xc92879d115fa23d6d7da27946f0dab96ea2db706'
-  );
-  devWallet = await ethers.getImpersonatedSigner(
     '0xF53B5822De2dd55b651712e58ABB8a72367eF92a'
   );
+  oldDevWallet = await ethers.getImpersonatedSigner(
+    '0xc92879d115fa23d6d7da27946f0dab96ea2db706'
+  );
   console.log(`Deployer: ${deployer.address}`);
+  console.log(`oldDevWallet: ${oldDevWallet.address}`);
   await setBalance(deployer.address, utils.parseEther('1000000000'));
-  await setBalance(devWallet.address, utils.parseEther('1000000000'));
+  await setBalance(oldDevWallet.address, utils.parseEther('1000000000'));
 };
 
 const deployContracts = async () => {
@@ -168,16 +169,24 @@ const updateOracle = async () => {
 
 const withdrawFromPresale = async () => {
   console.log('\n*** WITHDRAWING FROM PRESALE ***');
-  presaleContractBalance = await PresaleContract.checkContractBalance();
-  console.log("presaleContractBalance", presaleContractBalance)
-  tx = await PresaleContract.connect(deployer).WithdrawETHcall(
+
+  const initialBalance = await ethers.provider.getBalance(oldDevWallet.address);
+  console.log('Initial balance of oldDevWallet:', utils.formatEther(initialBalance));
+
+  const presaleContractBalance = await PresaleContract.checkContractBalance();
+  console.log("presaleContractBalance", presaleContractBalance);
+
+  const tx = await PresaleContract.connect(oldDevWallet).WithdrawETHcall(
     presaleContractBalance
   );
-  receipt = await tx.wait();
+  const receipt = await tx.wait();
   console.log(
     'Withdrew from presale:',
     utils.formatEther(presaleContractBalance)
   );
+
+  const finalBalance = await ethers.provider.getBalance(oldDevWallet.address);
+  console.log('Final balance of oldDevWallet:', utils.formatEther(finalBalance));
 };
 
 
@@ -731,8 +740,9 @@ const buyBRATEBSHARE = async (amount) => {
 
 const main = async () => {
   await setAddresses();
-  await deployContracts();
   await withdrawFromPresale();
+
+  await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
   await initializeBoardroom();
