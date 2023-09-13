@@ -16,7 +16,7 @@ contract BaseRate is ERC20Burnable, Operator {
     address public oracle;
 
     // Initial presale distribution
-    uint256 public constant INITIAL_PRESALE_DISTRIBUTION = 37.125 ether;
+    uint256 public constant INITIAL_PRESALE_DISTRIBUTION = 33.825 ether;
     uint256 public constant INITIAL_LIQUIDITY_DISTRIBUTION = 25 ether;
 
     // Should the taxes be calculated using the tax tiers
@@ -28,7 +28,7 @@ contract BaseRate is ERC20Burnable, Operator {
 
     // Tax Tiers
     uint256[] public taxTiersTwaps = [0, 5e17, 6e17, 7e17, 8e17, 9e17, 9.5e17, 1e18, 1.05e18, 1.10e18, 1.20e18, 1.30e18, 1.40e18, 1.50e18];
-    uint256[] public taxTiersRates = [2000, 1900, 1600, 1200, 1000, 700, 350, 250, 200, 175, 150, 125, 125, 100];
+    uint256[] public taxTiersRates = [2000, 1900, 1600, 1200, 1000, 1000, 500, 250, 200, 175, 150, 125, 125, 100];
 
     // Sender addresses excluded from Tax
     mapping(address => bool) public excludedAddresses;

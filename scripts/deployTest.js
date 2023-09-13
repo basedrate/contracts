@@ -59,7 +59,7 @@ const supplyBSHAREETH = utils.parseEther("20");
 const ETH_TEST = utils.parseEther("1");
 const ETHforBRATELiquidity = utils.parseEther("25");
 const ETHforBSHARELiquidity = utils.parseEther("25");
-const supplyBRATEForPresale = utils.parseEther("37.125");
+const supplyBRATEForPresale = utils.parseEther("33.825");
 const supplyBSHAREForPresale = utils.parseEther("27.497799");
 
 // const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
@@ -858,7 +858,7 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  // await sendBRATEAndBSHAREToPresaleDistributor();
+  await sendBRATEAndBSHAREToPresaleDistributor();
   await setRewardPoolAndInitialize();
   await updateOracle();
   await stakeBSHAREINBoardroom();
@@ -880,6 +880,7 @@ const main = async () => {
   await unStakeInSharePool();
 
   await buyBRATEBSHARE(0.1);
+  await disableTax();
 };
 
 main()

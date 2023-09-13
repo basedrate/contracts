@@ -17,6 +17,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     uint256 public startTime;
     uint256 public endTime;
     uint256 public runtime = 3 days; 
+    uint256 public constant EXTRA_PERCENT_BRATE = 23;
 
     mapping(address => UserData) public users;
 
@@ -150,8 +151,8 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     function updateSingleUser(address _user) external onlyOwner {
         IBasedRateSale.UserData memory userData = basedRateSale.users(_user);
         uint256 intermediateValue = userData.brateBought / 1000;
-        uint256 thirtyFivePercent = (intermediateValue * 35) / 100;
-        users[_user].brateBought = intermediateValue + thirtyFivePercent;
+        uint256 percent = (intermediateValue * EXTRA_PERCENT_BRATE) / 100;
+        users[_user].brateBought = intermediateValue + percent;
         users[_user].bshareBought = userData.bshareBought;
         users[_user].lastClaimTime = startTime;
     }
@@ -167,8 +168,8 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
                 address currentUser = basedRateSale.userIndex(i);
                 IBasedRateSale.UserData memory userData = basedRateSale.users(currentUser);
                 uint256 intermediateValue = userData.brateBought / 1000;
-                uint256 thirtyFivePercent = (intermediateValue * 35) / 100;
-                users[currentUser].brateBought = intermediateValue + thirtyFivePercent;
+                uint256 percent = (intermediateValue * EXTRA_PERCENT_BRATE) / 100;
+                users[currentUser].brateBought = intermediateValue + percent;
                 users[currentUser].bshareBought = userData.bshareBought;
                 users[currentUser].lastClaimTime = startTime;
             }
@@ -180,8 +181,8 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
             address currentUser = basedRateSale.userIndex(i);
             IBasedRateSale.UserData memory userData = basedRateSale.users(currentUser);
             uint256 intermediateValue = userData.brateBought / 1000;
-            uint256 thirtyFivePercent = (intermediateValue * 35) / 100;
-            users[currentUser].brateBought = intermediateValue + thirtyFivePercent;
+            uint256 percent = (intermediateValue * EXTRA_PERCENT_BRATE) / 100;
+            users[currentUser].brateBought = intermediateValue + percent;
             users[currentUser].bshareBought = userData.bshareBought;
             users[currentUser].lastClaimTime = startTime;
         }
