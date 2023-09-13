@@ -1011,8 +1011,6 @@ contract Treasury is ContractGuard {
     uint256 public seigniorageExpansionFloorPercent;
     uint256 public maxSupplyContractionPercent;
     uint256 public maxDebtRatioPercent;
-
-    // 28 first epochs (1 week) with 4.5% expansion regardless of BRATE price
     uint256 public bootstrapEpochs;
     uint256 public bootstrapSupplyExpansionPercent;
 
@@ -1243,7 +1241,7 @@ contract Treasury is ContractGuard {
         boardroom = _boardroom;
         startTime = _startTime;
 
-        baseRatePriceOne = 9 ** 17; // This is to allow a PEG of 1 BRATE per 0.9 ETH
+        baseRatePriceOne = 0.97 ether; // This is to allow a PEG of 1 BRATE per 1 ETH
         baseRatePriceCeiling = baseRatePriceOne.mul(101).div(100);
 
         // Dynamic max expansion percent
