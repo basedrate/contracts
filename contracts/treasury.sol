@@ -1487,9 +1487,9 @@ contract Treasury is ContractGuard {
 
     /* ========== MUTABLE FUNCTIONS ========== */
 
-    function _updateBaseRatePrice() internal {
-        try IOracle(baseOracle).update() {} catch {}
-    }
+    // function _updateBaseRatePrice() internal {
+    //     try IOracle(baseOracle).update() {} catch {}
+    // }
 
     function getBaseRateCirculatingSupply() public view returns (uint256) {
         IERC20 baseRateErc20 = IERC20(baseRate);
@@ -1546,7 +1546,7 @@ contract Treasury is ContractGuard {
         epochSupplyContractionLeft = epochSupplyContractionLeft.sub(
             _baseRateAmount
         );
-        _updateBaseRatePrice();
+       // _updateBaseRatePrice();
 
         emit BoughtBonds(msg.sender, _baseRateAmount, _bondAmount);
     }
@@ -1583,7 +1583,7 @@ contract Treasury is ContractGuard {
         IBasisAsset(bbond).burnFrom(msg.sender, _bondAmount);
         IERC20(baseRate).safeTransfer(msg.sender, _baseRateAmount);
 
-        _updateBaseRatePrice();
+       // _updateBaseRatePrice();
 
         emit RedeemedBonds(msg.sender, _baseRateAmount, _bondAmount);
     }
@@ -1632,7 +1632,7 @@ contract Treasury is ContractGuard {
         checkEpoch
         checkOperator
     {
-        _updateBaseRatePrice();
+        // _updateBaseRatePrice();
         previousEpochBaseRatePrice = getBaseRatePrice();
         uint256 baseRateSupply = getBaseRateCirculatingSupply().sub(
             seigniorageSaved

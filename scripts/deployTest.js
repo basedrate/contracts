@@ -152,22 +152,19 @@ const deployOracle = async () => {
   );
 
   const Oracle = await ethers.getContractFactory("Oracle", deployer);
-  oracle = await Oracle.deploy(BRATE_ETH_LP, 6 * 60 * 60, startTime);
+  oracle = await Oracle.deploy(BRATE_ETH_LP);
   await oracle.deployed();
   console.log(`Oracle deployed to ${oracle.address}`);
 };
 
-const updateOracle = async () => {
-  console.log("\n*** UPDATING ORACLE ***");
+const viewOracle = async () => {
+  console.log("\n*** VIEWING ORACLE ***");
   const pegPrice = await treasury.baseRatePriceOne();
-  const priceBefore = await treasury.getBaseRateUpdatedPrice();
-
-  console.log("peg = ", pegPrice, "price before update =", priceBefore );
-  tx = await oracle.update();
-  receipt = await tx.wait();
-
-  // const priceAfter = await treasury.getBaseRateUpdatedPrice();
-  // console.log("price after update =", priceAfter );
+  const twap = await treasury.getBaseRateUpdatedPrice();
+  const consult = await treasury.getBaseRatePrice();
+  console.log("twap = ", twap );
+  console.log("consult = ", consult );
+  console.log("pegPrice = ", pegPrice );
 };
 
 const withdrawFromPresale = async () => {
@@ -867,7 +864,6 @@ const main = async () => {
   await setOperators();
   // await sendBRATEAndBSHAREToPresaleDistributor();
   await setRewardPoolAndInitialize();
-  await updateOracle();
   await stakeBSHAREINBoardroom();
 
   // test logic
@@ -885,10 +881,55 @@ const main = async () => {
   await time.increase(360 + 6 * 3600);
   await collectExternalReward();
   await unStakeInSharePool();
-
-  await buyBRATEBSHARE(0.1);
-  await updateOracle();
-  await disableTax();
+  await viewOracle();
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  await time.increase(3600);
+  await buyBRATEBSHARE(10);
+  await viewOracle();
+  // await disableTax();
 };
 
 main()
