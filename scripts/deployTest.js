@@ -848,9 +848,94 @@ const buyBRATEBSHARE = async (amount) => {
       utils.formatEther(await baseRate.balanceOf(deployer.address))
     );
   } catch (error) {
+    console.error("Error in sellBSHARE:", error);
+  }
+};
+
+
+
+sellBRATE = async (amount) => {
+  console.log("\n*** SELLING BRATE ***");
+
+  tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+
+  const baseRateRoute = createRoute(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+  try {
+
+    console.log(
+      "BRATE Balance before:",
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    );
+
+    const tx = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+      utils.parseEther(amount.toString()),
+      0,
+      [baseRateRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400
+    );
+    await tx.wait();
+    console.log(
+      "BRATE Balance after:",
+      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    );
+  } catch (error) {
+    console.error("Error in sellBRATE:", error);
+  }
+};
+
+
+sellBSHARE = async (amount) => {
+  console.log("\n*** SELLING BSHARE ***");
+
+  tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+
+  const baseShareRoute = createRoute(
+    baseShare.address,
+    WETH,
+    false,
+    AerodromeFactory
+  );
+  try {
+
+    console.log(
+      "BSHARE Balance before:",
+      utils.formatEther(await baseShare.balanceOf(deployer.address))
+    );
+
+    const tx2 = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactTokensForETH(
+      utils.parseEther(amount.toString()),
+      0,
+      [baseShareRoute],
+      deployer.address,
+      Math.floor(Date.now() / 1000) + 24 * 86400
+    );
+    await tx2.wait();
+
+    console.log(
+      "BSHARE Balance after:",
+      utils.formatEther(await baseShare.balanceOf(deployer.address))
+    );
+
+
+  } catch (error) {
     console.error("Error in buyBRATEBSHARE:", error);
   }
 };
+
+
+
 
 const main = async () => {
   await setAddresses();
@@ -867,67 +952,26 @@ const main = async () => {
   await stakeBSHAREINBoardroom();
 
   // test logic
-  await time.increase(360 + 6 * 3600);
+  await time.increase(6 * 3600);
   await allocateSeigniorage();
-  await time.increase(360 + 6 * 3600);
+  await time.increase(6 * 3600);
   await allocateSeigniorage();
-  await time.increase(360 + 6 * 3600);
+  await time.increase(6 * 3600);
   await allocateSeigniorage();
-  await buyAERO_USDbC(1);
+  // await buyAERO_USDbC(1);
   // await testTransferFee();
   // await disableTax()
-  await AddLiquidityEthUSDC();
-  await stakeInSharePool();
-  await time.increase(360 + 6 * 3600);
-  await collectExternalReward();
-  await unStakeInSharePool();
-  await viewOracle();
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
-  await viewOracle();
-  await time.increase(3600);
-  await buyBRATEBSHARE(10);
+
+  // await AddLiquidityEthUSDC();
+  // await stakeInSharePool();
+  // await time.increase(6 * 3600);
+  // await collectExternalReward();
+  // await unStakeInSharePool();
+
+   await viewOracle();
+  // await buyBRATEBSHARE(10);
+  await sellBSHARE(1);
+  await sellBRATE(1);
   await viewOracle();
   // await disableTax();
 };
