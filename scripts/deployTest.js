@@ -359,7 +359,7 @@ const setRewardPoolAndInitialize = async () => {
     WETH_USDbC,
     true,
     startTime,
-    0,
+    400,
     true,
     WETH_USDbC_GAUGE
   );
@@ -371,7 +371,7 @@ const setRewardPoolAndInitialize = async () => {
     AERO_USDbC,
     true,
     startTime,
-    0,
+    400,
     true,
     AERO_USDbC_GAUGE
   );
