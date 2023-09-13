@@ -159,8 +159,15 @@ const deployOracle = async () => {
 
 const updateOracle = async () => {
   console.log("\n*** UPDATING ORACLE ***");
+  const pegPrice = await treasury.baseRatePriceOne();
+  const priceBefore = await treasury.getBaseRateUpdatedPrice();
+
+  console.log("peg = ", pegPrice, "price before update =", priceBefore );
   tx = await oracle.update();
   receipt = await tx.wait();
+
+  // const priceAfter = await treasury.getBaseRateUpdatedPrice();
+  // console.log("price after update =", priceAfter );
 };
 
 const withdrawFromPresale = async () => {
@@ -858,7 +865,7 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  await sendBRATEAndBSHAREToPresaleDistributor();
+  // await sendBRATEAndBSHAREToPresaleDistributor();
   await setRewardPoolAndInitialize();
   await updateOracle();
   await stakeBSHAREINBoardroom();
@@ -880,6 +887,7 @@ const main = async () => {
   await unStakeInSharePool();
 
   await buyBRATEBSHARE(0.1);
+  await updateOracle();
   await disableTax();
 };
 
