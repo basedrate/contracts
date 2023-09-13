@@ -1,22 +1,21 @@
-const { ethers } = require('hardhat');
+const { ethers } = require("hardhat");
 const {
   setBalance,
   time,
-} = require('@nomicfoundation/hardhat-network-helpers');
-const RouterABI = require('./RouterABI.json');
-const ERC20ABI = require('@uniswap/v2-core/build/IERC20.json').abi;
+} = require("@nomicfoundation/hardhat-network-helpers");
+const RouterABI = require("./RouterABI.json");
+const ERC20ABI = require("@uniswap/v2-core/build/IERC20.json").abi;
 
 const PresaleABI = [
-  'function WithdrawETHcall(uint256 amount) external',
-  'function checkContractBalance() external view returns(uint256)',
-  'function userCount() external view returns(uint256)',
+  "function WithdrawETHcall(uint256 amount) external",
+  "function checkContractBalance() external view returns(uint256)",
+  "function userCount() external view returns(uint256)",
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
 
 let tx, receipt; //transactions
-let deployer,
-  oldDevWallet
+let deployer, oldDevWallet;
 let baseRate,
   baseShare,
   baseBond,
@@ -29,17 +28,17 @@ let baseRate,
   presaleDistributor; //contracts
 let presaleContractBalance; //values
 
-const Presale = '0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659';
-const AerodromeRouter = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
-const AerodromeFactory = '0x420dd381b31aef6683db6b902084cb0ffece40da';
-const WETH = '0x4200000000000000000000000000000000000006';
-const REF = '0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A';
-const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
-const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
-const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75'; 
-const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b'; 
-const AERO = '0x940181a94A35A4569E4529A3CDfB74e38FD98631'; 
-const USDbC = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA'; 
+const Presale = "0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659";
+const AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
+const AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
+const WETH = "0x4200000000000000000000000000000000000006";
+const REF = "0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A";
+const WETH_USDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
+const WETH_USDbC_GAUGE = "0xeca7Ff920E7162334634c721133F3183B83B0323";
+const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
+const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
+const AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
+const USDbC = "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA";
 
 const WETH_USDbCContract = new ethers.Contract(WETH_USDbC, ERC20ABI, provider);
 const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
@@ -56,62 +55,62 @@ const AerodromeRouterContract = new ethers.Contract(
 const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
 
 const supplyBRATEETH = utils.parseEther("25");
-const supplyBSHAREETH = utils.parseEther('20');
-const ETH_TEST = utils.parseEther('1');
-const ETHforBRATELiquidity = utils.parseEther('25');
-const ETHforBSHARELiquidity = utils.parseEther('25');
+const supplyBSHAREETH = utils.parseEther("20");
+const ETH_TEST = utils.parseEther("1");
+const ETHforBRATELiquidity = utils.parseEther("25");
+const ETHforBSHARELiquidity = utils.parseEther("25");
 const supplyBRATEForPresale = utils.parseEther("37.125");
-const supplyBSHAREForPresale = utils.parseEther('27.497799');
+const supplyBSHAREForPresale = utils.parseEther("27.497799");
 
 // const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
 const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 // const WETHContract = new ethers.Contract(WETH, ERC20ABI, provider);
 
 const setAddresses = async () => {
-  console.log('\n*** SETTING ADDRESSES ***');
+  console.log("\n*** SETTING ADDRESSES ***");
   // [deployer, oldDevWallet] = await ethers.getSigners();
   deployer = await ethers.getImpersonatedSigner(
-    '0xadf9152100c536e854e0ed7a3e0e60275cef7e7d'
+    "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
   );
   oldDevWallet = await ethers.getImpersonatedSigner(
-    '0xc92879d115fa23d6d7da27946f0dab96ea2db706'
+    "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
   );
   console.log(`Deployer: ${deployer.address}`);
   console.log(`oldDevWallet: ${oldDevWallet.address}`);
-  await setBalance(deployer.address, utils.parseEther('1000000000'));
-  await setBalance(oldDevWallet.address, utils.parseEther('1000000000'));
+  await setBalance(deployer.address, utils.parseEther("1000000000"));
+  await setBalance(oldDevWallet.address, utils.parseEther("1000000000"));
 };
 
 const deployContracts = async () => {
-  console.log('\n*** DEPLOYING CONTRACTS ***');
+  console.log("\n*** DEPLOYING CONTRACTS ***");
   const TeamDistributor = await ethers.getContractFactory(
-    'TeamDistributor',
+    "TeamDistributor",
     deployer
   );
   teamDistributor = await TeamDistributor.deploy();
   await teamDistributor.deployed();
   console.log(`TeamDistributor deployed to ${teamDistributor.address}`);
-  const BaseRate = await ethers.getContractFactory('BaseRate', deployer);
+  const BaseRate = await ethers.getContractFactory("BaseRate", deployer);
   baseRate = await BaseRate.deploy();
   await baseRate.deployed();
   console.log(`BaseRate deployed to ${baseRate.address}`);
-  const BaseShare = await ethers.getContractFactory('BaseShare', deployer);
+  const BaseShare = await ethers.getContractFactory("BaseShare", deployer);
   baseShare = await BaseShare.deploy(startTime, teamDistributor.address);
   await baseShare.deployed();
   console.log(`BaseShare deployed to ${baseShare.address}`);
-  const BaseBond = await ethers.getContractFactory('BaseBond', deployer);
+  const BaseBond = await ethers.getContractFactory("BaseBond", deployer);
   baseBond = await BaseBond.deploy();
   await baseBond.deployed();
   console.log(`BaseBond deployed to ${baseBond.address}`);
   const CommunityFund = await ethers.getContractFactory(
-    'CommunityFund',
+    "CommunityFund",
     deployer
   );
   communityFund = await CommunityFund.deploy();
   await communityFund.deployed();
   console.log(`CommunityFund deployed to ${communityFund.address}`);
   const BaseShareRewardPool = await ethers.getContractFactory(
-    'BaseShareRewardPool',
+    "BaseShareRewardPool",
     deployer
   );
   baseShareRewardPool = await BaseShareRewardPool.deploy(
@@ -120,32 +119,30 @@ const deployContracts = async () => {
     communityFund.address
   );
   await baseShareRewardPool.deployed();
-  console.log(
-    `BaseShareRewardPool deployed to ${baseShareRewardPool.address}`
-  );
-  const Boardroom = await ethers.getContractFactory('Boardroom', deployer);
+  console.log(`BaseShareRewardPool deployed to ${baseShareRewardPool.address}`);
+  const Boardroom = await ethers.getContractFactory("Boardroom", deployer);
   boardroom = await Boardroom.deploy();
   await boardroom.deployed();
   console.log(`Boardroom deployed to ${boardroom.address}`);
-  const Treasury = await ethers.getContractFactory('Treasury', deployer);
+  const Treasury = await ethers.getContractFactory("Treasury", deployer);
   treasury = await Treasury.deploy();
   await treasury.deployed();
   console.log(`Treasury deployed to ${treasury.address}`);
   const PresaleDistributorFactory = await ethers.getContractFactory(
-    'presaleDistributor',
+    "presaleDistributor",
     deployer
-);
-presaleDistributor = await PresaleDistributorFactory.deploy(
-  6 * 3600,
-  baseRate.address,
-  baseShare.address
-);
+  );
+  presaleDistributor = await PresaleDistributorFactory.deploy(
+    6 * 3600,
+    baseRate.address,
+    baseShare.address
+  );
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
 };
 
 const deployOracle = async () => {
-  console.log('\n*** DEPLOYING ORACLE ***');
+  console.log("\n*** DEPLOYING ORACLE ***");
 
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
@@ -153,24 +150,27 @@ const deployOracle = async () => {
     true,
     AerodromeFactory
   );
- 
-  const Oracle = await ethers.getContractFactory('Oracle', deployer);
+
+  const Oracle = await ethers.getContractFactory("Oracle", deployer);
   oracle = await Oracle.deploy(BRATE_ETH_LP, 6 * 60 * 60, startTime);
   await oracle.deployed();
   console.log(`Oracle deployed to ${oracle.address}`);
 };
 
 const updateOracle = async () => {
-  console.log('\n*** UPDATING ORACLE ***');
+  console.log("\n*** UPDATING ORACLE ***");
   tx = await oracle.update();
   receipt = await tx.wait();
 };
 
 const withdrawFromPresale = async () => {
-  console.log('\n*** WITHDRAWING FROM PRESALE ***');
+  console.log("\n*** WITHDRAWING FROM PRESALE ***");
 
   const initialBalance = await ethers.provider.getBalance(oldDevWallet.address);
-  console.log('Initial balance of oldDevWallet:', utils.formatEther(initialBalance));
+  console.log(
+    "Initial balance of oldDevWallet:",
+    utils.formatEther(initialBalance)
+  );
 
   const presaleContractBalance = await PresaleContract.checkContractBalance();
   console.log("presaleContractBalance", presaleContractBalance);
@@ -180,30 +180,32 @@ const withdrawFromPresale = async () => {
   );
   const receipt = await tx.wait();
   console.log(
-    'Withdrew from presale:',
+    "Withdrew from presale:",
     utils.formatEther(presaleContractBalance)
   );
 
   const finalBalance = await ethers.provider.getBalance(oldDevWallet.address);
-  console.log('Final balance of oldDevWallet:', utils.formatEther(finalBalance));
+  console.log(
+    "Final balance of oldDevWallet:",
+    utils.formatEther(finalBalance)
+  );
 };
 
-
 const mintInitialSupplyAndAddLiquidity = async () => {
-  console.log('\n*** MINTING INITIAL SUPPLY ***');
+  console.log("\n*** MINTING INITIAL SUPPLY ***");
   tx = await baseRate.distributeReward(deployer.address);
   receipt = await tx.wait();
   console.log(
-    'BRATE Balance:',
+    "BRATE Balance:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   tx = await baseShare.distributeReward(baseShareRewardPool.address);
   receipt = await tx.wait();
   console.log(
-    'BSHARE Balance:',
+    "BSHARE Balance:",
     utils.formatEther(await baseShare.balanceOf(deployer.address))
   );
-  console.log('\n*** ADDING LIQUIDITY ***');
+  console.log("\n*** ADDING LIQUIDITY ***");
   tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
   receipt = await tx.wait();
   tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
@@ -217,7 +219,7 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     deployer.address,
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETHforBSHARELiquidity }
-);
+  );
 
   tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
     baseRate.address,
@@ -228,12 +230,11 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     deployer.address,
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETHforBRATELiquidity }
-);
-
+  );
 };
 
 const initializeBoardroom = async () => {
-  console.log('\n*** INITIALIZING BOARDROOM ***');
+  console.log("\n*** INITIALIZING BOARDROOM ***");
   tx = await boardroom.initialize(
     baseRate.address,
     baseShare.address,
@@ -242,7 +243,7 @@ const initializeBoardroom = async () => {
   receipt = await tx.wait();
 };
 const initializeTreasury = async () => {
-  console.log('\n*** INITIALIZING TREASURY ***');
+  console.log("\n*** INITIALIZING TREASURY ***");
   tx = await treasury.initialize(
     baseRate.address,
     baseBond.address,
@@ -255,19 +256,19 @@ const initializeTreasury = async () => {
 };
 
 const setParameters = async () => {
-  console.log('\n*** SETTING COMMUNITY FUND IN BASEDSHARE CONTRACT ***');
+  console.log("\n*** SETTING COMMUNITY FUND IN BASEDSHARE CONTRACT ***");
   tx = await teamDistributor.sendCustomTransaction(
     baseShare.address,
     0,
-    'setTreasuryFund(address)',
-    utils.defaultAbiCoder.encode(['address'], [communityFund.address])
+    "setTreasuryFund(address)",
+    utils.defaultAbiCoder.encode(["address"], [communityFund.address])
   );
   receipt = await tx.wait();
-  console.log('Community Fund:', await baseShare.communityFund());
-  console.log('\n*** SETTING TOKENS IN TEAM DISTRIBUTOR ***');
+  console.log("Community Fund:", await baseShare.communityFund());
+  console.log("\n*** SETTING TOKENS IN TEAM DISTRIBUTOR ***");
   tx = await teamDistributor.setTokens(baseShare.address, baseRate.address);
   receipt = await tx.wait();
-  console.log('\n*** SETTING EXTRA FUNDS IN TREASURY ***');
+  console.log("\n*** SETTING EXTRA FUNDS IN TREASURY ***");
   tx = await treasury.setExtraFunds(
     communityFund.address,
     2500,
@@ -275,27 +276,29 @@ const setParameters = async () => {
     500
   );
   receipt = await tx.wait();
-  console.log('\n*** SETTING ORACLE in BASERATE ***');
+  console.log("\n*** SETTING ORACLE in BASERATE ***");
   tx = await baseRate.setOracle(oracle.address);
-  console.log('\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor, presaleDistributor  ***');  
-  tx = await baseRate.excludeAddress(treasury.address)
+  console.log(
+    "\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor, presaleDistributor  ***"
+  );
+  tx = await baseRate.excludeAddress(treasury.address);
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(boardroom.address)
+  tx = await baseRate.excludeAddress(boardroom.address);
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(communityFund.address)
+  tx = await baseRate.excludeAddress(communityFund.address);
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(teamDistributor.address)
+  tx = await baseRate.excludeAddress(teamDistributor.address);
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(presaleDistributor.address)
+  tx = await baseRate.excludeAddress(presaleDistributor.address);
   receipt = await tx.wait();
-  tx = await baseRate.enableAutoCalculateTax()
+  tx = await baseRate.enableAutoCalculateTax();
   receipt = await tx.wait();
-  console.log('\n*** TAX ENABLED ***');
+  console.log("\n*** TAX ENABLED ***");
 };
 
 const setOperators = async () => {
   console.log(
-    '\n*** SETTING OPERATOR IN BRATE, PBOND, BSHARE AND BOARDROOM ***'
+    "\n*** SETTING OPERATOR IN BRATE, PBOND, BSHARE AND BOARDROOM ***"
   );
   tx = await baseRate.transferOperator(treasury.address);
   receipt = await tx.wait();
@@ -307,13 +310,12 @@ const setOperators = async () => {
   receipt = await tx.wait();
 };
 
-
 const setRewardPoolAndInitialize = async () => {
-  console.log('\n*** INITIALIZING REWARD POOL CONTRACT ***');
+  console.log("\n*** INITIALIZING REWARD POOL CONTRACT ***");
   tx = await baseShareRewardPool.initializer();
   receipt = await tx.wait();
 
-  console.log('\n*** SETTING REWARD POOL ***');
+  console.log("\n*** SETTING REWARD POOL ***");
 
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
@@ -329,91 +331,126 @@ const setRewardPoolAndInitialize = async () => {
     AerodromeFactory
   );
 
-  tx = await baseShareRewardPool.add(1000, BRATE_ETH_LP, true, startTime, 0, false,baseShareRewardPool.address);
+  tx = await baseShareRewardPool.add(
+    1000,
+    BRATE_ETH_LP,
+    true,
+    startTime,
+    0,
+    false,
+    baseShareRewardPool.address
+  );
   receipt = await tx.wait();
-  console.log('\nBRATE_ETH_LP added');
-  tx = await baseShareRewardPool.add(1000, BSHARE_ETH_LP, true, startTime, 0, false, baseShareRewardPool.address);
+  console.log("\nBRATE_ETH_LP added");
+  tx = await baseShareRewardPool.add(
+    1000,
+    BSHARE_ETH_LP,
+    true,
+    startTime,
+    0,
+    false,
+    baseShareRewardPool.address
+  );
   receipt = await tx.wait();
-  console.log('\nBSHARE_ETH_LP added');
+  console.log("\nBSHARE_ETH_LP added");
 
-  tx = await baseShareRewardPool.add(1000, WETH_USDbC, true, startTime, 0, true, WETH_USDbC_GAUGE);
+  tx = await baseShareRewardPool.add(
+    1000,
+    WETH_USDbC,
+    true,
+    startTime,
+    0,
+    true,
+    WETH_USDbC_GAUGE
+  );
   receipt = await tx.wait();
-  console.log('\nWETH_USDbC added');
+  console.log("\nWETH_USDbC added");
 
-  tx = await baseShareRewardPool.add(1000, AERO_USDbC, true, startTime, 0, true, AERO_USDbC_GAUGE);
+  tx = await baseShareRewardPool.add(
+    1000,
+    AERO_USDbC,
+    true,
+    startTime,
+    0,
+    true,
+    AERO_USDbC_GAUGE
+  );
   receipt = await tx.wait();
-  console.log('\nAERO_USDbC added');
-
+  console.log("\nAERO_USDbC added");
 
   console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
   console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
 
-  tx = await baseRate.setLP(BRATE_ETH_LP,true)
+  tx = await baseRate.setLP(BRATE_ETH_LP, true);
   receipt = await tx.wait();
-  console.log("BRATE_ETH_LP added as LP")
-
+  console.log("BRATE_ETH_LP added as LP");
 };
 
 const stakeInSharePool = async () => {
-  console.log('\n*** STAKING IN SHAREPOOL ***');
+  console.log("\n*** STAKING IN SHAREPOOL ***");
   let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(' WETH_USDbC LP balance before ', LPbalance);
-  tx = await WETH_USDbCContract.connect(deployer).approve(baseShareRewardPool.address, ethers.constants.MaxUint256);
+  console.log(" WETH_USDbC LP balance before ", LPbalance);
+  tx = await WETH_USDbCContract.connect(deployer).approve(
+    baseShareRewardPool.address,
+    ethers.constants.MaxUint256
+  );
 
-  tx = await baseShareRewardPool.deposit(2,LPbalance,REF);
+  tx = await baseShareRewardPool.deposit(2, LPbalance, REF);
   receipt = await tx.wait();
 
   let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(' WETH_USDbC LP ', LPbalanceAfter);
-
+  console.log(" WETH_USDbC LP ", LPbalanceAfter);
 };
 
-
 const unStakeInSharePool = async () => {
-  console.log('\n*** UNSTAKING IN SHAREPOOL ***');
+  console.log("\n*** UNSTAKING IN SHAREPOOL ***");
   let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(' WETH_USDbC LP balance before ', LPbalance);
+  console.log(" WETH_USDbC LP balance before ", LPbalance);
 
   let lpBalanceForPool = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log('GLOBAL LP Balance for Pool ID 2 before: ', lpBalanceForPool);
+  console.log("GLOBAL LP Balance for Pool ID 2 before: ", lpBalanceForPool);
 
-  let userInfoForDeployer = await baseShareRewardPool.userInfo(2, deployer.address);
+  let userInfoForDeployer = await baseShareRewardPool.userInfo(
+    2,
+    deployer.address
+  );
   let amount = userInfoForDeployer.amount;
-  console.log('user Staked before', amount);
+  console.log("user Staked before", amount);
 
-  tx = await baseShareRewardPool.withdraw(2,amount);
+  tx = await baseShareRewardPool.withdraw(2, amount);
   receipt = await tx.wait();
 
   let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(' WETH_USDbC LP ', LPbalanceAfter);
+  console.log(" WETH_USDbC LP ", LPbalanceAfter);
 
-  let userInfoForDeployerAfter = await baseShareRewardPool.userInfo(2, deployer.address);
+  let userInfoForDeployerAfter = await baseShareRewardPool.userInfo(
+    2,
+    deployer.address
+  );
   let amountAfter = userInfoForDeployerAfter.amount;
-  console.log('user Staked after', amountAfter);
+  console.log("user Staked after", amountAfter);
 
   let lpBalanceForPoolAfter = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log('GLOBAL LP Balance for Pool ID 2 before: ', lpBalanceForPoolAfter);
-
+  console.log(
+    "GLOBAL LP Balance for Pool ID 2 before: ",
+    lpBalanceForPoolAfter
+  );
 };
 
 const collectExternalReward = async () => {
-  console.log('\n*** GETTING AERO FROM SHAREPOOL ***');
+  console.log("\n*** GETTING AERO FROM SHAREPOOL ***");
   let Aerobalance = await AEROCContract.balanceOf(communityFund.address);
-  console.log(' AERO balance in communityFun before ', Aerobalance);
-
+  console.log(" AERO balance in communityFun before ", Aerobalance);
 
   tx = await baseShareRewardPool.getExternalReward(2);
   receipt = await tx.wait();
 
   let AerobalanceAfter = await AEROCContract.balanceOf(communityFund.address);
-  console.log(' AERO balance in communityFund after ', AerobalanceAfter);
-
+  console.log(" AERO balance in communityFund after ", AerobalanceAfter);
 };
 
-
-
 const stakeBSHAREINBoardroom = async () => {
-  console.log('\n*** STAKING BSHARE IN BOARDROOM ***');
+  console.log("\n*** STAKING BSHARE IN BOARDROOM ***");
   tx = await baseShare
     .connect(deployer)
     .approve(boardroom.address, ethers.constants.MaxUint256);
@@ -424,135 +461,161 @@ const stakeBSHAREINBoardroom = async () => {
 };
 
 const allocateSeigniorage = async () => {
-  console.log('\n*** ALLOCATING SEIGNORAGE ***');
+  console.log("\n*** ALLOCATING SEIGNORAGE ***");
   console.log(
-    'BRATE Balance TeamDistributor Before:',
+    "BRATE Balance TeamDistributor Before:",
     utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
   );
   console.log(
-    'BRATE Balance Community Fund Before:',
+    "BRATE Balance Community Fund Before:",
     utils.formatEther(await baseRate.balanceOf(communityFund.address))
   );
   console.log(
-    'BRATE Balance Boardroom Before:',
+    "BRATE Balance Boardroom Before:",
     utils.formatEther(await baseRate.balanceOf(boardroom.address))
   );
   tx = await treasury.allocateSeigniorage();
   receipt = await tx.wait();
   console.log(
-    'BRATE Balance TeamDistributor After:',
+    "BRATE Balance TeamDistributor After:",
     utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
   );
   console.log(
-    'BRATE Balance Community Fund After:',
+    "BRATE Balance Community Fund After:",
     utils.formatEther(await baseRate.balanceOf(communityFund.address))
   );
   console.log(
-    'BRATE Balance Boardroom After:',
+    "BRATE Balance Boardroom After:",
     utils.formatEther(await baseRate.balanceOf(boardroom.address))
   );
 };
 
 const testTransferFee = async () => {
-  console.log('\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS ***');
+  console.log("\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS ***");
   console.log(
-    'BRATE Balance Deployer Before:',
+    "BRATE Balance Deployer Before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead Before:',
+    "BRATE Balance AddressDead Before:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
-  const tx0 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  const tx0 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
   await tx0.wait();
   console.log(
-    'BRATE allowance Before:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
-  const tx1 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  const tx1 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
   await tx1.wait();
   console.log(
-    'BRATE Balance Deployer after:',
+    "BRATE Balance Deployer after:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead after:',
+    "BRATE Balance AddressDead after:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
   console.log(
-    'BRATE allowance After:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
-  console.log('\n*** TRANSFER_FROM WITHOUT FEE 1 ETH TO DEAD ADDRESS ***');
-  tx = await baseRate.disableAutoCalculateTax()
+  console.log("\n*** TRANSFER_FROM WITHOUT FEE 1 ETH TO DEAD ADDRESS ***");
+  tx = await baseRate.disableAutoCalculateTax();
   receipt = await tx.wait();
-  tx = await baseRate.setTaxRate(0)
+  tx = await baseRate.setTaxRate(0);
   receipt = await tx.wait();
   console.log(
-    'BRATE Balance Deployer Before:',
+    "BRATE Balance Deployer Before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead Before:',
+    "BRATE Balance AddressDead Before:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
-  const tx2 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  const tx2 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
   await tx2.wait();
   console.log(
-    'BRATE allowance Before:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
-  const tx3 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  const tx3 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
   await tx3.wait();
   console.log(
-    'BRATE Balance Deployer after:',
+    "BRATE Balance Deployer after:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead after:',
+    "BRATE Balance AddressDead after:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
   console.log(
-    'BRATE allowance After:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
-  tx = await baseRate.setTaxRate(1500)
+  tx = await baseRate.setTaxRate(1500);
   receipt = await tx.wait();
-  tx = await baseRate.enableAutoCalculateTax()
+  tx = await baseRate.enableAutoCalculateTax();
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(AddressDead)
+  tx = await baseRate.excludeAddress(AddressDead);
   receipt = await tx.wait();
-  console.log('\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS EXCLUDED ***');
   console.log(
-    'BRATE Balance Deployer Before:',
+    "\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS EXCLUDED ***"
+  );
+  console.log(
+    "BRATE Balance Deployer Before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead Before:',
+    "BRATE Balance AddressDead Before:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
-  const tx4 = await baseRate.connect(deployer).approve(deployer.address,utils.parseEther("1"))
+  const tx4 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
   await tx4.wait();
   console.log(
-    'BRATE allowance Before:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
-  const tx5 = await baseRate.connect(deployer).transferFrom(deployer.address,AddressDead, utils.parseEther("1"))
+  const tx5 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
   await tx5.wait();
   console.log(
-    'BRATE Balance Deployer after:',
+    "BRATE Balance Deployer after:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead after:',
+    "BRATE Balance AddressDead after:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
   console.log(
-    'BRATE allowance After:',
-    utils.formatEther(await baseRate.allowance(deployer.address,deployer.address))
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
   );
 
-  console.log('\n*** TRANSFER WITH FEE 1 ETH TO DEAD ADDRESS ***');
+  console.log("\n*** TRANSFER WITH FEE 1 ETH TO DEAD ADDRESS ***");
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
     WETH,
@@ -561,69 +624,73 @@ const testTransferFee = async () => {
   );
 
   console.log(
-    'BRATE Balance Deployer Before:',
+    "BRATE Balance Deployer Before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead Before:',
+    "BRATE Balance AddressDead Before:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
 
-
-  const tx6 = await baseRate.connect(deployer).transfer(AddressDead, utils.parseEther("1"))
+  const tx6 = await baseRate
+    .connect(deployer)
+    .transfer(AddressDead, utils.parseEther("1"));
   await tx6.wait();
 
   console.log(
-    'BRATE Balance Deployer AFTER:',
+    "BRATE Balance Deployer AFTER:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'BRATE Balance AddressDead AFTER:',
+    "BRATE Balance AddressDead AFTER:",
     utils.formatEther(await baseRate.balanceOf(AddressDead))
   );
 
-  console.log('\n*** TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***');
+  console.log("\n*** TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
   console.log(
-    'BRATE Balance Deployer Before:',
+    "BRATE Balance Deployer Before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
 
   console.log(
-    'BRATE Balance Before BRATE_ETH_LP:',
+    "BRATE Balance Before BRATE_ETH_LP:",
     utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
   );
 
-  const tx7 = await baseRate.connect(deployer).transfer(BRATE_ETH_LP, utils.parseEther("1"))
+  const tx7 = await baseRate
+    .connect(deployer)
+    .transfer(BRATE_ETH_LP, utils.parseEther("1"));
   await tx7.wait();
 
   console.log(
-    'BRATE Balance AFTER BRATE_ETH_LP:',
+    "BRATE Balance AFTER BRATE_ETH_LP:",
     utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
   );
 
   console.log(
-    'BRATE Balance Deployer AFTER:',
+    "BRATE Balance Deployer AFTER:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
+};
 
-}
-
-  const createRoute = (from, to, factory) => {
-    return {
-      from: from,
-      to: to,
-      factory: factory,
-      feeOnTransfer: true
-    };
+const createRoute = (from, to, stable, factory) => {
+  return {
+    from,
+    to,
+    stable,
+    factory,
   };
+};
 
 const buyAERO_USDbC = async (amount) => {
-  console.log('\n*** BUYING AERO AND USDbC ***');
-  const AERORoute = createRoute(WETH, AERO, AerodromeFactory); 
-  const USDbCRoute = createRoute(WETH, USDbC, AerodromeFactory);
+  console.log("\n*** BUYING AERO AND USDbC ***");
+  const AERORoute = createRoute(WETH, AERO, false, AerodromeFactory);
+  const USDbCRoute = createRoute(WETH, USDbC, false, AerodromeFactory);
 
   try {
-    const tx0 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+    const tx0 = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
       0,
       [AERORoute],
       deployer.address,
@@ -631,7 +698,9 @@ const buyAERO_USDbC = async (amount) => {
       { value: utils.parseEther(amount.toString()) }
     );
     await tx0.wait();
-    const tx1 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+    const tx1 = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
       0,
       [USDbCRoute],
       deployer.address,
@@ -640,38 +709,38 @@ const buyAERO_USDbC = async (amount) => {
     );
     await tx1.wait();
     console.log(
-      'AERO Balance Deployer after:',
+      "AERO Balance Deployer after:",
       utils.formatEther(await AEROCContract.balanceOf(deployer.address))
     );
     console.log(
-      'USDbC Balance Deployer after:',
+      "USDbC Balance Deployer after:",
       utils.formatEther(await USDbCContract.balanceOf(deployer.address))
     );
-
   } catch (error) {
     console.error("Error in buy Tokens:", error);
   }
 };
 
 const disableTax = async () => {
-  console.log('\n*** TAX DISABLED ***');
-  console.log("Tax before ",await baseRate.taxRate())
+  console.log("\n*** TAX DISABLED ***");
+  console.log("Tax before ", await baseRate.taxRate());
 
-  tx = await baseRate.disableAutoCalculateTax()
+  tx = await baseRate.disableAutoCalculateTax();
   receipt = await tx.wait();
-  tx = await baseRate.setTaxRate(0)
+  tx = await baseRate.setTaxRate(0);
   receipt = await tx.wait();
 
-  console.log("Tax after ",await baseRate.taxRate())
-
-}
-
+  console.log("Tax after ", await baseRate.taxRate());
+};
 
 const AddLiquidityEthUSDC = async () => {
-  console.log('\n*** ADDING LIQUIDITY ETH USDC ***');
+  console.log("\n*** ADDING LIQUIDITY ETH USDC ***");
   let balanceUSDC = await USDbCContract.balanceOf(deployer.address);
-  console.log("balanceUSDC ", balanceUSDC)
-  tx = await USDbCContract.connect(deployer).approve(AerodromeRouter, ethers.constants.MaxUint256);
+  console.log("balanceUSDC ", balanceUSDC);
+  tx = await USDbCContract.connect(deployer).approve(
+    AerodromeRouter,
+    ethers.constants.MaxUint256
+  );
   receipt = await tx.wait();
   tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
     USDbC,
@@ -682,15 +751,14 @@ const AddLiquidityEthUSDC = async () => {
     deployer.address,
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETH_TEST }
-);
-let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
+  );
+  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
 
-console.log(' WETH_USDbC LP ', LPbalance);
-
+  console.log(" WETH_USDbC LP ", LPbalance);
 };
 
 const sendBRATEAndBSHAREToPresaleDistributor = async () => {
-  console.log('\n*** SENDING PRATE AND PSHARE TO PRESALE DISTRIBUTOR ***');
+  console.log("\n*** SENDING PRATE AND PSHARE TO PRESALE DISTRIBUTOR ***");
   tx = await baseRate.transfer(
     presaleDistributor.address,
     supplyBRATEForPresale
@@ -702,11 +770,11 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   );
   receipt = await tx.wait();
   console.log(
-    'BRATE Balance:',
+    "BRATE Balance:",
     utils.formatEther(await baseRate.balanceOf(presaleDistributor.address))
   );
   console.log(
-    'BSHARE Balance:',
+    "BSHARE Balance:",
     utils.formatEther(await baseShare.balanceOf(presaleDistributor.address))
   );
 
@@ -720,17 +788,28 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
 };
 
 const buyBRATEBSHARE = async (amount) => {
-  console.log('\n*** BUYING BRATE AND BSHARE ***');
-  const baseRateRoute = createRoute(WETH, baseRate.address, AerodromeFactory); 
-  const baseShareRoute = createRoute(WETH, baseShare.address, AerodromeFactory);
+  console.log("\n*** BUYING BRATE AND BSHARE ***");
+  const baseRateRoute = createRoute(
+    WETH,
+    baseRate.address,
+    true,
+    AerodromeFactory
+  );
+  const baseShareRoute = createRoute(
+    WETH,
+    baseShare.address,
+    false,
+    AerodromeFactory
+  );
   try {
-
     console.log(
-      'BSHARE Balance before:',
+      "BSHARE Balance before:",
       utils.formatEther(await baseShare.balanceOf(deployer.address))
     );
 
-    const tx2 = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+    const tx2 = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
       0,
       [baseShareRoute],
       deployer.address,
@@ -738,18 +817,20 @@ const buyBRATEBSHARE = async (amount) => {
       { value: utils.parseEther(amount.toString()) }
     );
     await tx2.wait();
-  
+
     console.log(
-      'BSHARE Balance after:',
+      "BSHARE Balance after:",
       utils.formatEther(await baseShare.balanceOf(deployer.address))
     );
 
     console.log(
-      'BRATE Balance before:',
+      "BRATE Balance before:",
       utils.formatEther(await baseRate.balanceOf(deployer.address))
     );
 
-    const tx = await AerodromeRouterContract.connect(deployer).swapExactETHForTokensSupportingFeeOnTransferTokens(
+    const tx = await AerodromeRouterContract.connect(
+      deployer
+    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
       0,
       [baseRateRoute],
       deployer.address,
@@ -759,10 +840,9 @@ const buyBRATEBSHARE = async (amount) => {
     await tx.wait();
 
     console.log(
-      'BRATE Balance after:',
+      "BRATE Balance after:",
       utils.formatEther(await baseRate.balanceOf(deployer.address))
     );
-    
   } catch (error) {
     console.error("Error in buyBRATEBSHARE:", error);
   }
@@ -778,11 +858,10 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  await sendBRATEAndBSHAREToPresaleDistributor();
+  // await sendBRATEAndBSHAREToPresaleDistributor();
   await setRewardPoolAndInitialize();
   await updateOracle();
   await stakeBSHAREINBoardroom();
-
 
   // test logic
   await time.increase(360 + 6 * 3600);
@@ -800,8 +879,7 @@ const main = async () => {
   await collectExternalReward();
   await unStakeInSharePool();
 
-  // await buyBRATEBSHARE(0.1);
- 
+  await buyBRATEBSHARE(0.1);
 };
 
 main()
