@@ -1267,7 +1267,7 @@ contract Treasury is ContractGuard {
         maxSupplyContractionPercent = 300; // Upto 3.0% supply for contraction (to burn BRATE and mint BBOND)
         maxDebtRatioPercent = 4000; // Upto 40% supply of BBOND to purchase
 
-        premiumThreshold = 105;
+        premiumThreshold = 110;
         premiumPercent = 7000;
 
         // First 6 epochs with 2.5% expansion
