@@ -1204,6 +1204,7 @@ contract Treasury is ContractGuard {
 
     function getBondPremiumRate() public view returns (uint256 _rate) {
         uint256 _baseRatePrice = getBaseRatePrice();
+        uint256 scaledBaseRatePriceOne = baseRatePriceOne + 0.03 ether;
         if (_baseRatePrice > baseRatePriceCeiling) {
             uint256 _baseRatePricePremiumThreshold = baseRatePriceOne
                 .mul(premiumThreshold)
@@ -1214,13 +1215,13 @@ contract Treasury is ContractGuard {
                     .sub(baseRatePriceOne)
                     .mul(premiumPercent)
                     .div(10000);
-                _rate = baseRatePriceOne.add(_premiumAmount);
+                _rate = scaledBaseRatePriceOne.add(_premiumAmount);
                 if (maxPremiumRate > 0 && _rate > maxPremiumRate) {
                     _rate = maxPremiumRate;
                 }
             } else {
                 // no premium bonus
-                _rate = baseRatePriceOne;
+                _rate = scaledBaseRatePriceOne;
             }
         }
     }
@@ -1266,7 +1267,7 @@ contract Treasury is ContractGuard {
         maxSupplyContractionPercent = 300; // Upto 3.0% supply for contraction (to burn BRATE and mint BBOND)
         maxDebtRatioPercent = 4000; // Upto 40% supply of BBOND to purchase
 
-        premiumThreshold = 110;
+        premiumThreshold = 105;
         premiumPercent = 7000;
 
         // First 6 epochs with 2.5% expansion

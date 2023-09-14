@@ -882,7 +882,7 @@ const testBonds = async (signer) => {
 
   for (let i = 0; i < numOfIterationsSell_; i++) {
     await time.increase(1800);
-    await buyBRATE(0.3);
+    await buyBRATE(0.6);
     await viewOracle();
   }
   const numOfIterationsAll_ = (numOfIterationsSell * 1800) / 21600;
