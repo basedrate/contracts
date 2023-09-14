@@ -55,9 +55,9 @@ const AerodromeFactoryContract = new ethers.Contract(
   FactoryABI,
   provider
 );
-
-const startTime = startTimeSharepool + 21600; // six hours later
 const startTimeSharepool = Math.floor(Date.now() / 1000);
+const startTime = startTimeSharepool + 21600; // six hours later
+
 
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
@@ -407,6 +407,7 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
 const main = async () => {
   await setAddresses();
   await deployContracts();
+  await setTeamAddresses();
   await mintInitialSupplyAndCreatePools();
   await deployOracle();
   await initializeBoardroom();
@@ -415,7 +416,7 @@ const main = async () => {
   await setOperators();
   await setRewardPoolAndInitialize();
   await stakeBSHAREINBoardroom();
-  await setTeamAddresses();
+
   // await sendBRATEAndBSHAREToPresaleDistributor();
 
   
