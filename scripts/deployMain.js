@@ -13,7 +13,7 @@ const PresaleABI = [
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
-
+require('dotenv').config();
 let tx, receipt; //transactions
 let deployer, oldDevWallet;
 let baseRate,
@@ -35,6 +35,12 @@ const WETH_USDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
 const WETH_USDbC_GAUGE = "0xeca7Ff920E7162334634c721133F3183B83B0323";
 const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
 const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
+const team1 = process.env.team1;
+const team2 = process.env.team2;
+const team3 = process.env.team3;
+const team4 = process.env.team4;
+const cloud = process.env.cloud;
+
 const supplyBRATEForPresale = utils.parseEther("33.825");
 const supplyBSHAREForPresale = utils.parseEther("27.497799");
 
@@ -352,6 +358,13 @@ const stakeBSHAREINBoardroom = async () => {
   receipt = await tx.wait();
 };
 
+const setTeamAddresses = async () => {
+  console.log("\n*** SETTING TEAM ADDRESSES ***");
+  await teamDistributor.setCaller(cloud);
+  await teamDistributor.setTeam([team1, team2, team3, team4]);
+  console.log("Team addresses and caller have been set!");
+};
+
 
 const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   console.log("\n*** SENDING PRATE AND PSHARE TO PRESALE DISTRIBUTOR ***");
@@ -402,7 +415,10 @@ const main = async () => {
   await setOperators();
   await setRewardPoolAndInitialize();
   await stakeBSHAREINBoardroom();
+  await setTeamAddresses();
   // await sendBRATEAndBSHAREToPresaleDistributor();
+
+  
 
 };
 

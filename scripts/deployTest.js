@@ -13,6 +13,7 @@ const PresaleABI = [
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
+require('dotenv').config();
 
 let tx, receipt; //transactions
 let deployer, oldDevWallet;
@@ -39,6 +40,11 @@ const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
 const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
 const AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 const USDbC = "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA";
+const team1 = process.env.team1;
+const team2 = process.env.team2;
+const team3 = process.env.team3;
+const team4 = process.env.team4;
+
 
 const WETH_USDbCContract = new ethers.Contract(WETH_USDbC, ERC20ABI, provider);
 const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
@@ -930,6 +936,56 @@ const testBonds = async (signer) => {
   
 };
 
+const setTeamAddresses = async () => {
+  console.log("\n*** SETTING TEAM ADDRESSES ***");
+  await teamDistributor.setCaller(deployer.address);
+  await teamDistributor.setTeam([team1, team2, team3, team4]);
+  console.log("Team addresses have been set!");
+};
+
+
+const distibrute = async () => {
+  console.log("\n*** DISTRIBUTING ***");
+  await teamDistributor.automatedDistribution();
+
+  console.log(
+    "BRATE Balance team1:",
+    utils.formatEther(await baseRate.balanceOf(team1))
+  );
+  console.log(
+    'PSHARE Balance team1:',
+    utils.formatEther(await baseShare.balanceOf(team1))
+  );
+
+  console.log(
+    "BRATE Balance team2:",
+    utils.formatEther(await baseRate.balanceOf(team2))
+  );
+  console.log(
+    'PSHARE Balance team2:',
+    utils.formatEther(await baseShare.balanceOf(team2))
+  );
+
+  console.log(
+    "BRATE Balance team3:",
+    utils.formatEther(await baseRate.balanceOf(team3))
+  );
+  console.log(
+    'PSHARE Balance team3:',
+    utils.formatEther(await baseShare.balanceOf(team3))
+  );
+
+  console.log(
+    "BRATE Balance team4:",
+    utils.formatEther(await baseRate.balanceOf(team4))
+  );
+  console.log(
+    'PSHARE Balance team4:',
+    utils.formatEther(await baseShare.balanceOf(team4))
+  );
+
+};
+
 const main = async () => {
   await setAddresses();
   await withdrawFromPresale();
@@ -944,8 +1000,21 @@ const main = async () => {
   await setRewardPoolAndInitialize();
   await stakeBSHAREINBoardroom();
 
-  // test logic
 
+  // test logic
+  await setTeamAddresses();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await distibrute();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await distibrute();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await distibrute();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await distibrute();
   // await mintBrate();
   // await disableTax();
   // await sellBRATE(0.1);
