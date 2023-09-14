@@ -186,5 +186,13 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
             users[currentUser].bshareBought = userData.bshareBought;
             users[currentUser].lastClaimTime = startTime;
         }
-}
+    }
+
+    function recoverTokens(
+        address tokenAddress,
+        address to
+    ) external onlyOwner {
+        IERC20 token = IERC20(tokenAddress);
+        token.safeTransfer(to, token.balanceOf(address(this)));
+    }
 }
