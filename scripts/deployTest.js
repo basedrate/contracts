@@ -4,6 +4,7 @@ const {
   time,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const RouterABI = require("./RouterABI.json");
+const FactoryABI = require("./factoryABI.json");
 const ERC20ABI = require("@uniswap/v2-core/build/IERC20.json").abi;
 const PresaleABI = [
   "function WithdrawETHcall(uint256 amount) external",
@@ -49,6 +50,13 @@ const AerodromeRouterContract = new ethers.Contract(
   RouterABI,
   provider
 );
+
+const AerodromeFactoryContract = new ethers.Contract(
+  AerodromeFactory,
+  FactoryABI,
+  provider
+);
+
 
 // const startTime = 1687219200; //2023-06-20 at 00:00 UTC TO CHECK
 const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
@@ -132,7 +140,7 @@ const deployContracts = async () => {
     deployer
   );
   presaleDistributor = await PresaleDistributorFactory.deploy(
-    6 * 3600,
+    startTime,
     baseRate.address,
     baseShare.address
   );
@@ -208,6 +216,35 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     "BSHARE Balance:",
     utils.formatEther(await baseShare.balanceOf(deployer.address))
   );
+
+
+
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseRate.address, WETH, true)
+  receipt = await tx.wait();
+
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseShare.address, WETH, false)
+  receipt = await tx.wait();
+
+  console.log("pools created")
+
+
+  const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseShare.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  console.log(" BSHARE_ETH_LP = ", BSHARE_ETH_LP);
+  console.log(" BRATE_ETH_LP = ", BRATE_ETH_LP);
+
   console.log("\n*** ADDING LIQUIDITY ***");
   tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
   receipt = await tx.wait();
@@ -909,45 +946,22 @@ const main = async () => {
 
   // test logic
 
-  await mintBrate();
-
-  await disableTax();
-  // await sellBRATE(0.1);
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  // await enableTax();
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  // await buyAERO_USDbC(1);
+  // await mintBrate();
   // await disableTax();
-  //  await viewOracle();
-  //  await testBonds();
-  //  await viewOracle();
-  //  await enableTax();
-  //  await sellBRATE(0.1);
+  // await sellBRATE(0.1);
+  // await time.increase(1800);
+  // await enableTax();
+  // await buyAERO_USDbC(1);
+  // await viewOracle();
+  // await testBonds();
   // await AddLiquidityEthUSDC();
   // await stakeInSharePool();
   // await time.increase(6 * 3600);
   // await collectExternalReward();
   // await unStakeInSharePool();
-  //  await viewOracle();
   // await time.increase(6 * 3600);
   // await allocateSeigniorage();
-  await testBonds();
+
 
 
 };

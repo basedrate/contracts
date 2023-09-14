@@ -1,0 +1,23 @@
+[{
+    "constant": false,
+    "inputs": [
+      {
+        "name": "firstAddress",
+        "type": "address"
+      },
+      {
+        "name": "secondAddress",
+        "type": "address"
+      },
+      {
+        "name": "flag",
+        "type": "bool"
+      }
+    ],
+    "name": "createPool",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+  ]
