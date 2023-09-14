@@ -50,8 +50,8 @@ const AerodromeFactoryContract = new ethers.Contract(
   provider
 );
 
-const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
-const startTimeSharepool = startTime + 3600; // one hour later
+const startTime = startTimeSharepool + 21600; // six hours later
+const startTimeSharepool = Math.floor(Date.now() / 1000);
 
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
