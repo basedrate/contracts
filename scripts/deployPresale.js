@@ -110,11 +110,12 @@ const addWalletsWhitelistBatch4 = async () => {
 
 const main = async () => {
   await setAddresses();
-  await deployContracts();
-  await addWalletsWhitelistBatch1();
-  await addWalletsWhitelistBatch2();
-  await addWalletsWhitelistBatch3();
-  await addWalletsWhitelistBatch4();
+ // await time.increase(210 * 3600); //21 hours
+  // await deployContracts();
+  // await addWalletsWhitelistBatch1();
+  // await addWalletsWhitelistBatch2();
+  // await addWalletsWhitelistBatch3();
+  // await addWalletsWhitelistBatch4();
 };
 
 main()

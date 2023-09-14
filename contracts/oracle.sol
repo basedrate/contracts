@@ -25,13 +25,10 @@ contract Oracle is Ownable {
     ) external view returns (uint256 amountOut) {
         uint256 currentWindow;
         uint256 lenght = pair.observationLength();
-        if (lenght < 1) {
+        if (lenght <= window) {
             amountOut = 1 ether;
         }
-        if (lenght < window) {
-            currentWindow = lenght;
-        }
-        if (lenght >= window) {
+        if (lenght > window) {
             currentWindow = window;
         }
         if (_token == token0) {
@@ -48,11 +45,8 @@ contract Oracle is Ownable {
     ) external view returns (uint256 amountOut) {
         uint256 currentWindow;
         uint256 lenght = pair.observationLength();
-        if (lenght == 1) {
-            amountOut = 1 ether;
-        }
         if (lenght <= windowTwap) {
-            currentWindow = lenght - 1;
+            amountOut = 1 ether;
         }
         if (lenght > windowTwap) {
             currentWindow = windowTwap;
