@@ -175,10 +175,11 @@ contract BaseRate is ERC20Burnable, Operator {
         if (!autoCalculateTax) {
             currentTaxRate = taxRate;
         }
-        if (currentTaxRate == 0 || excludedAddresses[sender] || excludedAddresses[recipient]) {
-            _transfer(sender, recipient, amount);
-        } else {
-            _transferFromWithTax(sender, recipient, amount);
+        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0 && (!excludedAddresses[sender] || !excludedAddresses[recipient])) {
+         _transferFromWithTax(sender, recipient, amount);
+        }
+        else {
+        _transfer(sender, recipient, amount);
         }
         _approve(sender, _msgSender(), allowance(sender, _msgSender()).sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
