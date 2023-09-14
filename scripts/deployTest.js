@@ -1030,7 +1030,6 @@ const redeemBonds = async (signer) => {
 const testBonds = async (signer) => {
   console.log('\n*** TESTING BONDS***');
 
-  
   const numOfIterationsSell = 48;
 
   for (let i = 0; i < numOfIterationsSell; i++) {
@@ -1059,7 +1058,6 @@ const testBonds = async (signer) => {
 
   await redeemBonds(deployer);
   
-
 };
 
 const main = async () => {
@@ -1077,6 +1075,7 @@ const main = async () => {
   await stakeBSHAREINBoardroom();
 
   // test logic
+  await disableTax();
   await sellBRATE(0.1);
   await time.increase(6 * 3600);
   await allocateSeigniorage();
@@ -1095,7 +1094,7 @@ const main = async () => {
    await viewOracle();
 
 
-  await disableTax();
+
 
   await time.increase(6 * 3600);
   await allocateSeigniorage();
