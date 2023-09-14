@@ -405,7 +405,7 @@ const setRewardPoolAndInitialize = async () => {
     WETH_USDbC,
     true,
     startTime,
-    400,
+    0,
     true,
     WETH_USDbC_GAUGE
   );
