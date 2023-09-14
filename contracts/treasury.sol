@@ -1181,19 +1181,20 @@ contract Treasury is ContractGuard {
 
     function getBondDiscountRate() public view returns (uint256 _rate) {
         uint256 _baseRatePrice = getBaseRatePrice();
-        if (_baseRatePrice <= baseRatePriceOne) {
+        uint256 scaledBaseRatePriceOne = baseRatePriceOne + 0.03 ether;
+        if (_baseRatePrice <= scaledBaseRatePriceOne) {
             if (discountPercent == 0) {
                 // no discount
-                _rate = baseRatePriceOne;
+                _rate = scaledBaseRatePriceOne;
             } else {
-                uint256 _bondAmount = baseRatePriceOne.mul(1e18).div(
+                uint256 _bondAmount = scaledBaseRatePriceOne.mul(1e18).div(
                     _baseRatePrice
                 ); // to burn 1 BRATE
                 uint256 _discountAmount = _bondAmount
-                    .sub(baseRatePriceOne)
+                    .sub(scaledBaseRatePriceOne)
                     .mul(discountPercent)
                     .div(10000);
-                _rate = baseRatePriceOne.add(_discountAmount);
+                _rate = scaledBaseRatePriceOne.add(_discountAmount);
                 if (maxDiscountRate > 0 && _rate > maxDiscountRate) {
                     _rate = maxDiscountRate;
                 }

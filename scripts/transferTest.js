@@ -389,69 +389,6 @@ const setRewardPoolAndInitialize = async () => {
   console.log("BRATE_ETH_LP added as LP");
 };
 
-const stakeInSharePool = async () => {
-  console.log("\n*** STAKING IN SHAREPOOL ***");
-  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP balance before ", LPbalance);
-  tx = await WETH_USDbCContract.connect(deployer).approve(
-    baseShareRewardPool.address,
-    ethers.constants.MaxUint256
-  );
-
-  tx = await baseShareRewardPool.deposit(2, LPbalance, REF);
-  receipt = await tx.wait();
-
-  let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP ", LPbalanceAfter);
-};
-
-const unStakeInSharePool = async () => {
-  console.log("\n*** UNSTAKING IN SHAREPOOL ***");
-  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP balance before ", LPbalance);
-
-  let lpBalanceForPool = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log("GLOBAL LP Balance for Pool ID 2 before: ", lpBalanceForPool);
-
-  let userInfoForDeployer = await baseShareRewardPool.userInfo(
-    2,
-    deployer.address
-  );
-  let amount = userInfoForDeployer.amount;
-  console.log("user Staked before", amount);
-
-  tx = await baseShareRewardPool.withdraw(2, amount);
-  receipt = await tx.wait();
-
-  let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP ", LPbalanceAfter);
-
-  let userInfoForDeployerAfter = await baseShareRewardPool.userInfo(
-    2,
-    deployer.address
-  );
-  let amountAfter = userInfoForDeployerAfter.amount;
-  console.log("user Staked after", amountAfter);
-
-  let lpBalanceForPoolAfter = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log(
-    "GLOBAL LP Balance for Pool ID 2 before: ",
-    lpBalanceForPoolAfter
-  );
-};
-
-const collectExternalReward = async () => {
-  console.log("\n*** GETTING AERO FROM SHAREPOOL ***");
-  let Aerobalance = await AEROCContract.balanceOf(communityFund.address);
-  console.log(" AERO balance in communityFun before ", Aerobalance);
-
-  tx = await baseShareRewardPool.getExternalReward(2);
-  receipt = await tx.wait();
-
-  let AerobalanceAfter = await AEROCContract.balanceOf(communityFund.address);
-  console.log(" AERO balance in communityFund after ", AerobalanceAfter);
-};
-
 const stakeBSHAREINBoardroom = async () => {
   console.log("\n*** STAKING BSHARE IN BOARDROOM ***");
   tx = await baseShare
@@ -493,55 +430,6 @@ const allocateSeigniorage = async () => {
   );
 };
 
-
-const createRoute = (from, to, stable, factory) => {
-  return {
-    from,
-    to,
-    stable,
-    factory,
-  };
-};
-
-const buyAERO_USDbC = async (amount) => {
-  console.log("\n*** BUYING AERO AND USDbC ***");
-  const AERORoute = createRoute(WETH, AERO, false, AerodromeFactory);
-  const USDbCRoute = createRoute(WETH, USDbC, false, AerodromeFactory);
-
-  try {
-    const tx0 = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [AERORoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx0.wait();
-    const tx1 = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [USDbCRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx1.wait();
-    console.log(
-      "AERO Balance Deployer after:",
-      utils.formatEther(await AEROCContract.balanceOf(deployer.address))
-    );
-    console.log(
-      "USDbC Balance Deployer after:",
-      utils.formatEther(await USDbCContract.balanceOf(deployer.address))
-    );
-  } catch (error) {
-    console.error("Error in buy Tokens:", error);
-  }
-};
-
 const disableTax = async () => {
   console.log("\n*** TAX DISABLED ***");
   console.log("Tax before ", await baseRate.taxRate());
@@ -562,291 +450,6 @@ const enableTax = async () => {
   tx = await baseRate.enableAutoCalculateTax();
   receipt = await tx.wait();
   console.log("Tax after ", await baseRate.taxRate());
-};
-
-const AddLiquidityEthUSDC = async () => {
-  console.log("\n*** ADDING LIQUIDITY ETH USDC ***");
-  let balanceUSDC = await USDbCContract.balanceOf(deployer.address);
-  console.log("balanceUSDC ", balanceUSDC);
-  tx = await USDbCContract.connect(deployer).approve(
-    AerodromeRouter,
-    ethers.constants.MaxUint256
-  );
-  receipt = await tx.wait();
-  tx = await AerodromeRouterContract.connect(deployer).addLiquidityETH(
-    USDbC,
-    false,
-    balanceUSDC,
-    0,
-    0,
-    deployer.address,
-    Math.floor(Date.now() / 1000 + 86400),
-    { value: ETH_TEST }
-  );
-  let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-
-  console.log(" WETH_USDbC LP ", LPbalance);
-};
-
-const sendBRATEAndBSHAREToPresaleDistributor = async () => {
-  console.log("\n*** SENDING PRATE AND PSHARE TO PRESALE DISTRIBUTOR ***");
-  tx = await baseRate.transfer(
-    presaleDistributor.address,
-    supplyBRATEForPresale
-  );
-  receipt = await tx.wait();
-  tx = await baseShare.transfer(
-    presaleDistributor.address,
-    supplyBSHAREForPresale
-  );
-  receipt = await tx.wait();
-  console.log(
-    "BRATE Balance:",
-    utils.formatEther(await baseRate.balanceOf(presaleDistributor.address))
-  );
-  console.log(
-    "BSHARE Balance:",
-    utils.formatEther(await baseShare.balanceOf(presaleDistributor.address))
-  );
-
-  const presaleContractuserCount = await PresaleContract.userCount();
-  const userCountAsInt = parseInt(presaleContractuserCount.toString(), 10);
-  console.log("presaleContractuserCount", userCountAsInt);
-  tx = await presaleDistributor.updateAllUsers();
-  const values = await presaleDistributor.getTotalValues();
-  console.log("summed presale values", values);
-  receipt = await tx.wait();
-};
-
-const buyBRATEBSHARE = async (amount) => {
-  console.log("\n*** BUYING BRATE AND BSHARE ***");
-  const baseRateRoute = createRoute(
-    WETH,
-    baseRate.address,
-    true,
-    AerodromeFactory
-  );
-  const baseShareRoute = createRoute(
-    WETH,
-    baseShare.address,
-    false,
-    AerodromeFactory
-  );
-  try {
-    console.log(
-      "BSHARE Balance before:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
-    );
-
-    const tx2 = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [baseShareRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx2.wait();
-
-    console.log(
-      "BSHARE Balance after:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
-    );
-
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-
-    const tx = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [baseRateRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx.wait();
-
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-  } catch (error) {
-    console.error("Error in sellBSHARE:", error);
-  }
-};
-
-const buyBRATE = async (amount) => {
-  console.log("\n*** BUYING BRATE AND BSHARE ***");
-  const baseRateRoute = createRoute(
-    WETH,
-    baseRate.address,
-    true,
-    AerodromeFactory
-  );
-
-  try {
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-
-    const tx = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [baseRateRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx.wait();
-
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-  } catch (error) {
-    console.error("Error in sellBSHARE:", error);
-  }
-};
-
-sellBRATE = async (amount) => {
-  console.log("\n*** SELLING BRATE ***");
-  tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
-  receipt = await tx.wait();
-
-  const baseRateRoute = createRoute(
-    baseRate.address,
-    WETH,
-    true,
-    AerodromeFactory
-  );
-  try {
-
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-
-    const tx = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactTokensForETHSupportingFeeOnTransferTokens(
-      utils.parseEther(amount.toString()),
-      0,
-      [baseRateRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400
-    );
-    await tx.wait();
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
-    );
-  } catch (error) {
-    console.error("Error in sellBRATE:", error);
-  }
-};
-
-sellBSHARE = async (amount) => {
-  console.log("\n*** SELLING BSHARE ***");
-
-  tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
-  receipt = await tx.wait();
-
-  const baseShareRoute = createRoute(
-    baseShare.address,
-    WETH,
-    false,
-    AerodromeFactory
-  );
-  try {
-
-    console.log(
-      "BSHARE Balance before:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
-    );
-
-    const tx2 = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactTokensForETH(
-      utils.parseEther(amount.toString()),
-      0,
-      [baseShareRoute],
-      deployer.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400
-    );
-    await tx2.wait();
-
-    console.log(
-      "BSHARE Balance after:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
-    );
-
-
-  } catch (error) {
-    console.error("Error in buyBRATEBSHARE:", error);
-  }
-};
-
-const buyBonds = async (signer) => {
-  console.log('\n*** BUYING BONDS ***');
-  console.log(
-    "BRATE Balance before:",
-    utils.formatEther(await baseRate.balanceOf(deployer.address))
-  );
-  const Price = await treasury.getBaseRatePrice();
-  tx = await baseRate
-    .connect(signer)
-    .approve(treasury.address, ethers.constants.MaxUint256);
-  receipt = await tx.wait();
-  tx = await treasury
-    .connect(signer)
-    .buyBonds(utils.parseEther('1'), Price);
-  receipt = await tx.wait();
-  
-  console.log(
-    'PBOND Balance After:',
-    utils.formatEther(await baseBond.balanceOf(signer.address))
-  );
-  console.log(
-    "BRATE Balance before:",
-    utils.formatEther(await baseRate.balanceOf(deployer.address))
-  );
-};
-
-const redeemBonds = async (signer) => {
-  console.log('\n*** Redeeming BONDS ***');
-  console.log(
-    "BRATE Balance before:",
-    utils.formatEther(await baseRate.balanceOf(deployer.address))
-  );
-  console.log(
-    'PBOND Balance Before:',
-    utils.formatEther(await baseBond.balanceOf(signer.address))
-  );
-  const bonds = await baseBond.balanceOf(signer.address);
-  const Price = await treasury.getBaseRatePrice();
-  tx = await baseBond
-    .connect(signer)
-    .approve(treasury.address, ethers.constants.MaxUint256);
-  receipt = await tx.wait();
-  tx = await treasury
-    .connect(signer)
-    .redeemBonds(bonds, Price);
-  receipt = await tx.wait();
-  
-  console.log(
-    'PBOND Balance After:',
-    utils.formatEther(await baseBond.balanceOf(signer.address))
-  );
-  console.log(
-    "BRATE Balance before:",
-    utils.formatEther(await baseRate.balanceOf(deployer.address))
-  );
 };
 
 const mintBrate = async (signer) => {
@@ -903,52 +506,11 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  // await sendBRATEAndBSHAREToPresaleDistributor();
+
   await setRewardPoolAndInitialize();
   await stakeBSHAREINBoardroom();
-
-  // test logic
-
   await mintBrate();
-
-  await disableTax();
-  // await sellBRATE(0.1);
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  // await enableTax();
-  // await time.increase(1800);
-  // await sellBRATE(0.1);
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  // await buyAERO_USDbC(1);
-  // await disableTax();
-  //  await viewOracle();
-  //  await testBonds();
-  //  await viewOracle();
-  //  await enableTax();
-  //  await sellBRATE(0.1);
-  // await AddLiquidityEthUSDC();
-  // await stakeInSharePool();
-  // await time.increase(6 * 3600);
-  // await collectExternalReward();
-  // await unStakeInSharePool();
-  //  await viewOracle();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  await testBonds();
-
+  await testTransferFee();
 
 };
 
@@ -962,4 +524,422 @@ main()
 const showGasUsed = async (tx) => {
   const gasUsed = utils.formatEther(tx.gasUsed) * tx.effectiveGasPrice;
   console.log({ gasUsed });
+};
+
+
+
+
+
+
+
+
+const testTransferFee = async () => {
+  console.log("\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS ***");
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance AddressDead Before:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx0 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx0.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx1 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
+  await tx1.wait();
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance AddressDead after:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+
+
+  console.log("\n*** TRANSFER_FROM WITHOUT FEE 1 ETH TO DEAD ADDRESS ***");
+  tx = await baseRate.disableAutoCalculateTax();
+  receipt = await tx.wait();
+  tx = await baseRate.setTaxRate(0);
+  receipt = await tx.wait();
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance AddressDead Before:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx2 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx2.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx3 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
+  await tx3.wait();
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance AddressDead after:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  tx = await baseRate.setTaxRate(1500);
+  receipt = await tx.wait();
+  tx = await baseRate.enableAutoCalculateTax();
+  receipt = await tx.wait();
+  tx = await baseRate.excludeAddress(AddressDead);
+  receipt = await tx.wait();
+  console.log(
+    "\n*** TRANSFER_FROM WITH FEE 1 ETH TO DEAD ADDRESS EXCLUDED ***"
+  );
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance AddressDead Before:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+  const tx4 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx4.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx5 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, AddressDead, utils.parseEther("1"));
+  await tx5.wait();
+
+  console.log(
+    "BRATE Balance AddressDead after:",
+    utils.formatEther(await baseRate.balanceOf(AddressDead))
+  );
+
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+
+  console.log("\n*** TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ***");
+  const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP Before:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  const tx6 = await baseRate
+    .connect(deployer)
+    .transfer(BRATE_ETH_LP, utils.parseEther("1"));
+  await tx6.wait();
+  console.log(
+    "BRATE Balance BRATE_ETH_LP AFTER:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  console.log(
+    "BRATE Balance Deployer AFTER:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log("\n*** TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log("Tax is ", await baseRate.taxRate());
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log(
+    "BRATE Balance Before BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  const tx7 = await baseRate
+    .connect(deployer)
+    .transfer(BRATE_ETH_LP, utils.parseEther("1"));
+  await tx7.wait();
+
+  console.log(
+    "BRATE Balance AFTER BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  console.log(
+    "BRATE Balance Deployer AFTER:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+
+
+  console.log("\n*** TRANSFER_FROM WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP Before:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  const tx8 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx8.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx9 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, BRATE_ETH_LP, utils.parseEther("1"));
+  await tx9.wait();
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP after:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+
+
+
+  tx = await baseRate.excludeAddress(deployer.address);
+  receipt = await tx.wait();
+
+
+  console.log(
+    "is deployer excluded ?:",
+    await baseRate.excludedAddresses(deployer.address)
+  );
+
+  console.log(
+    "is BRATE_ETH_LP excluded ?:",
+    await baseRate.excludedAddresses(BRATE_ETH_LP)
+  );
+
+
+
+  console.log("\n*** EXCLUDED FROM TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log("Tax is ", await baseRate.taxRate());
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log(
+    "BRATE Balance Before BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  const tx10 = await baseRate
+    .connect(deployer)
+    .transfer(BRATE_ETH_LP, utils.parseEther("1"));
+  await tx10.wait();
+
+  console.log(
+    "BRATE Balance AFTER BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  console.log(
+    "BRATE Balance Deployer AFTER:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+
+
+
+  console.log("\n*** EXCLUDED FROM TRANSFER_FROM WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP Before:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  const tx11 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx11.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx12 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, BRATE_ETH_LP, utils.parseEther("1"));
+  await tx12.wait();
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP after:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+
+
+
+
+  tx = await baseRate.includeAddress(deployer.address);
+  receipt = await tx.wait();
+
+
+  console.log(
+    "is deployer excluded ?:",
+    await baseRate.excludedAddresses(deployer.address)
+  );
+
+  tx = await baseRate.excludeAddress(BRATE_ETH_LP);
+  receipt = await tx.wait();
+
+  console.log(
+    "is BRATE_ETH_LP excluded ?:",
+    await baseRate.excludedAddresses(BRATE_ETH_LP)
+  );
+
+
+
+  console.log("\n*** EXCLUDED TO TRANSFER WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log("Tax is ", await baseRate.taxRate());
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log(
+    "BRATE Balance Before BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  const tx13 = await baseRate
+    .connect(deployer)
+    .transfer(BRATE_ETH_LP, utils.parseEther("1"));
+  await tx13.wait();
+
+  console.log(
+    "BRATE Balance AFTER BRATE_ETH_LP:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+
+  console.log(
+    "BRATE Balance Deployer AFTER:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+
+  console.log("\n*** EXCLUDED TO TRANSFER_FROM WITH FEE 1 ETH TO BRATE_ETH_LP ADDRESS ***");
+
+  console.log(
+    "BRATE Balance Deployer Before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP Before:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  const tx14 = await baseRate
+    .connect(deployer)
+    .approve(deployer.address, utils.parseEther("1"));
+  await tx14.wait();
+  console.log(
+    "BRATE allowance Before:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
+  const tx15 = await baseRate
+    .connect(deployer)
+    .transferFrom(deployer.address, BRATE_ETH_LP, utils.parseEther("1"));
+  await tx15.wait();
+  console.log(
+    "BRATE Balance Deployer after:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance BRATE_ETH_LP after:",
+    utils.formatEther(await baseRate.balanceOf(BRATE_ETH_LP))
+  );
+  console.log(
+    "BRATE allowance After:",
+    utils.formatEther(
+      await baseRate.allowance(deployer.address, deployer.address)
+    )
+  );
 };
