@@ -175,8 +175,7 @@ contract BaseRate is ERC20Burnable, Operator {
         if (!autoCalculateTax) {
             currentTaxRate = taxRate;
         }
-        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0 && (!excludedAddresses[sender] || !excludedAddresses[recipient])) {
-         _transferFromWithTax(sender, recipient, amount);
+        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0 && !excludedAddresses[sender] && !excludedAddresses[recipient] ) {
         }
         else {
         _transfer(sender, recipient, amount);
@@ -218,7 +217,7 @@ contract BaseRate is ERC20Burnable, Operator {
         if (!autoCalculateTax) {
             currentTaxRate = taxRate;
         }
-        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0) {
+        if ((isLP[recipient] || isLP[sender]) && currentTaxRate !=0 && !excludedAddresses[sender] && !excludedAddresses[recipient]) {
         _transferWithTax(recipient, amount);
         
         }
