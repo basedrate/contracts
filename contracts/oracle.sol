@@ -19,6 +19,12 @@ contract Oracle is Ownable {
         token1 = pair.token1();
     }
 
+            function observationLength(
+    ) external view returns (uint256 lenght) {
+        lenght = pair.observationLength();
+    }
+
+
     function consult(
         address _token,
         uint256 _amountIn
@@ -27,6 +33,7 @@ contract Oracle is Ownable {
         uint256 lenght = pair.observationLength();
         if (lenght <= window) {
             amountOut = 1 ether;
+            return amountOut;
         }
         if (lenght > window) {
             currentWindow = window;
@@ -47,6 +54,7 @@ contract Oracle is Ownable {
         uint256 lenght = pair.observationLength();
         if (lenght <= windowTwap) {
             amountOut = 1 ether;
+            return amountOut;
         }
         if (lenght > windowTwap) {
             currentWindow = windowTwap;
