@@ -6,6 +6,8 @@ const {
 const RouterABI = require("./RouterABI.json");
 const FactoryABI = require("./factoryABI.json");
 const ERC20ABI = require("@uniswap/v2-core/build/IERC20.json").abi;
+const PoolABI =
+  require("../artifacts/contracts/aerodrome/Pool.sol/Pool.json").abi;
 const PresaleABI = [
   "function WithdrawETHcall(uint256 amount) external",
   "function checkContractBalance() external view returns(uint256)",
@@ -13,6 +15,8 @@ const PresaleABI = [
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
+
+const { deployAERO } = require("./deployAERO");
 
 let tx, receipt; //transactions
 let deployer, oldDevWallet;
@@ -25,12 +29,14 @@ let baseRate,
   boardroom,
   treasury,
   oracle,
-  presaleDistributor; //contracts
+  presaleDistributor,
+  brate_eth_lp,
+  bshare_eth_lp; //contracts
 let presaleContractBalance; //values
 
 const Presale = "0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659";
-const AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
-const AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
+let AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
+let AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
 const WETH = "0x4200000000000000000000000000000000000006";
 const REF = "0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A";
 const WETH_USDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
@@ -45,18 +51,17 @@ const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
 const AEROCContract = new ethers.Contract(AERO, ERC20ABI, provider);
 const AddressDead = "0x000000000000000000000000000000000000dead";
 
-const AerodromeRouterContract = new ethers.Contract(
+let AerodromeRouterContract = new ethers.Contract(
   AerodromeRouter,
   RouterABI,
   provider
 );
 
-const AerodromeFactoryContract = new ethers.Contract(
+let AerodromeFactoryContract = new ethers.Contract(
   AerodromeFactory,
   FactoryABI,
   provider
 );
-
 
 // const startTime = 1687219200; //2023-06-20 at 00:00 UTC TO CHECK
 const startTime = Math.floor(Date.now() / 1000); //Now + 20 seconds
@@ -169,9 +174,9 @@ const viewOracle = async () => {
   const pegPrice = await treasury.baseRatePriceOne();
   const twap = await treasury.getBaseRateUpdatedPrice();
   const consult = await treasury.getBaseRatePrice();
-  console.log("twap = ", twap );
-  console.log("consult = ", consult );
-  console.log("pegPrice = ", pegPrice );
+  console.log("twap = ", twap);
+  console.log("consult = ", consult);
+  console.log("pegPrice = ", pegPrice);
 };
 
 const withdrawFromPresale = async () => {
@@ -217,16 +222,21 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     utils.formatEther(await baseShare.balanceOf(deployer.address))
   );
 
-
-
-  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseRate.address, WETH, true)
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(
+    baseRate.address,
+    WETH,
+    true
+  );
   receipt = await tx.wait();
 
-  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseShare.address, WETH, false)
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(
+    baseShare.address,
+    WETH,
+    false
+  );
   receipt = await tx.wait();
 
-  console.log("pools created")
-
+  console.log("pools created");
 
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
@@ -235,12 +245,16 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     AerodromeFactory
   );
 
+  brate_eth_lp = new ethers.Contract(BRATE_ETH_LP, PoolABI, provider);
+
   const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseShare.address,
     WETH,
     true,
     AerodromeFactory
   );
+
+  bshare_eth_lp = new ethers.Contract(BSHARE_ETH_LP, PoolABI, provider);
 
   console.log(" BSHARE_ETH_LP = ", BSHARE_ETH_LP);
   console.log(" BRATE_ETH_LP = ", BRATE_ETH_LP);
@@ -271,6 +285,10 @@ const mintInitialSupplyAndAddLiquidity = async () => {
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETHforBRATELiquidity }
   );
+
+  tx = await baseRate.setLP(BRATE_ETH_LP, true);
+  receipt = await tx.wait();
+  console.log("BRATE_ETH_LP added as LP");
 };
 
 const initializeBoardroom = async () => {
@@ -420,10 +438,6 @@ const setRewardPoolAndInitialize = async () => {
 
   console.log("BRATE_ETH_LP:", BRATE_ETH_LP);
   console.log("BSHARE_ETH_LP:", BSHARE_ETH_LP);
-
-  tx = await baseRate.setLP(BRATE_ETH_LP, true);
-  receipt = await tx.wait();
-  console.log("BRATE_ETH_LP added as LP");
 };
 
 const stakeInSharePool = async () => {
@@ -529,7 +543,6 @@ const allocateSeigniorage = async () => {
     utils.formatEther(await baseRate.balanceOf(boardroom.address))
   );
 };
-
 
 const createRoute = (from, to, stable, factory) => {
   return {
@@ -726,34 +739,36 @@ const buyBRATE = async (amount) => {
   );
 
   try {
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    const BalanceBefore = utils.formatEther(
+      await baseRate.balanceOf(oldDevWallet.address)
     );
-
+    console.log("BRATE Balance before:", BalanceBefore);
     const tx = await AerodromeRouterContract.connect(
-      deployer
+      oldDevWallet
     ).swapExactETHForTokensSupportingFeeOnTransferTokens(
       0,
       [baseRateRoute],
-      deployer.address,
+      oldDevWallet.address,
       Math.floor(Date.now() / 1000) + 24 * 86400,
       { value: utils.parseEther(amount.toString()) }
     );
     await tx.wait();
 
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    const BalanceAfter = utils.formatEther(
+      await baseRate.balanceOf(oldDevWallet.address)
     );
+    console.log("BRATE Balance after:", BalanceAfter);
+    console.log("BRATE Balance bought:", BalanceAfter - BalanceBefore);
   } catch (error) {
     console.error("Error in sellBSHARE:", error);
   }
 };
 
-sellBRATE = async (amount) => {
+const sellBRATE = async (amount) => {
   console.log("\n*** SELLING BRATE ***");
-  tx = await baseRate.approve(AerodromeRouter, ethers.constants.MaxUint256);
+  tx = await baseRate
+    .connect(oldDevWallet)
+    .approve(AerodromeRouter, ethers.constants.MaxUint256);
   receipt = await tx.wait();
 
   const baseRateRoute = createRoute(
@@ -763,32 +778,31 @@ sellBRATE = async (amount) => {
     AerodromeFactory
   );
   try {
-
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    const BalanceBefore = utils.formatEther(
+      await baseRate.balanceOf(oldDevWallet.address)
     );
-
+    console.log("BRATE Balance before:", BalanceBefore);
     const tx = await AerodromeRouterContract.connect(
-      deployer
+      oldDevWallet
     ).swapExactTokensForETHSupportingFeeOnTransferTokens(
       utils.parseEther(amount.toString()),
       0,
       [baseRateRoute],
-      deployer.address,
+      oldDevWallet.address,
       Math.floor(Date.now() / 1000) + 24 * 86400
     );
     await tx.wait();
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(deployer.address))
+    const BalanceAfter = utils.formatEther(
+      await baseRate.balanceOf(oldDevWallet.address)
     );
+    console.log("BRATE Balance after:", BalanceAfter);
+    console.log("BRATE Balance sold:", BalanceBefore - BalanceAfter);
   } catch (error) {
     console.error("Error in sellBRATE:", error);
   }
 };
 
-sellBSHARE = async (amount) => {
+const sellBSHARE = async (amount) => {
   console.log("\n*** SELLING BSHARE ***");
 
   tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
@@ -801,7 +815,6 @@ sellBSHARE = async (amount) => {
     AerodromeFactory
   );
   try {
-
     console.log(
       "BSHARE Balance before:",
       utils.formatEther(await baseShare.balanceOf(deployer.address))
@@ -822,15 +835,13 @@ sellBSHARE = async (amount) => {
       "BSHARE Balance after:",
       utils.formatEther(await baseShare.balanceOf(deployer.address))
     );
-
-
   } catch (error) {
     console.error("Error in buyBRATEBSHARE:", error);
   }
 };
 
 const buyBonds = async (signer) => {
-  console.log('\n*** BUYING BONDS ***');
+  console.log("\n*** BUYING BONDS ***");
   console.log(
     "BRATE Balance before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
@@ -840,13 +851,11 @@ const buyBonds = async (signer) => {
     .connect(signer)
     .approve(treasury.address, ethers.constants.MaxUint256);
   receipt = await tx.wait();
-  tx = await treasury
-    .connect(signer)
-    .buyBonds(utils.parseEther('1'), Price);
+  tx = await treasury.connect(signer).buyBonds(utils.parseEther("1"), Price);
   receipt = await tx.wait();
-  
+
   console.log(
-    'PBOND Balance After:',
+    "PBOND Balance After:",
     utils.formatEther(await baseBond.balanceOf(signer.address))
   );
   console.log(
@@ -856,13 +865,13 @@ const buyBonds = async (signer) => {
 };
 
 const redeemBonds = async (signer) => {
-  console.log('\n*** Redeeming BONDS ***');
+  console.log("\n*** Redeeming BONDS ***");
   console.log(
     "BRATE Balance before:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
   console.log(
-    'PBOND Balance Before:',
+    "PBOND Balance Before:",
     utils.formatEther(await baseBond.balanceOf(signer.address))
   );
   const bonds = await baseBond.balanceOf(signer.address);
@@ -871,13 +880,11 @@ const redeemBonds = async (signer) => {
     .connect(signer)
     .approve(treasury.address, ethers.constants.MaxUint256);
   receipt = await tx.wait();
-  tx = await treasury
-    .connect(signer)
-    .redeemBonds(bonds, Price);
+  tx = await treasury.connect(signer).redeemBonds(bonds, Price);
   receipt = await tx.wait();
-  
+
   console.log(
-    'PBOND Balance After:',
+    "PBOND Balance After:",
     utils.formatEther(await baseBond.balanceOf(signer.address))
   );
   console.log(
@@ -887,19 +894,19 @@ const redeemBonds = async (signer) => {
 };
 
 const mintBrate = async (signer) => {
-console.log("Minting for test");
-tx = await baseRate.transferOperator(deployer.address);
-receipt = await tx.wait();
+  console.log("Minting for test");
+  tx = await baseRate.transferOperator(deployer.address);
+  receipt = await tx.wait();
 
-tx = await baseRate.mint(deployer.address,supplyBRATEForPresale);
-receipt = await tx.wait();
+  tx = await baseRate.mint(deployer.address, supplyBRATEForPresale);
+  receipt = await tx.wait();
 
-tx = await baseRate.transferOperator(treasury.address);
-receipt = await tx.wait();
-}
+  tx = await baseRate.transferOperator(treasury.address);
+  receipt = await tx.wait();
+};
 
 const testBonds = async (signer) => {
-  console.log('\n*** TESTING BONDS***');
+  console.log("\n*** TESTING BONDS***");
 
   const numOfIterationsSell = 48;
 
@@ -927,12 +934,21 @@ const testBonds = async (signer) => {
     await allocateSeigniorage();
   }
   await redeemBonds(deployer);
-  
 };
 
 const main = async () => {
+  const { router, poolFactory } = await deployAERO();
+  AerodromeRouter = router;
+  AerodromeFactory = poolFactory;
+  AerodromeRouterContract = new ethers.Contract(router, RouterABI, provider);
+  AerodromeFactoryContract = new ethers.Contract(
+    poolFactory,
+    FactoryABI,
+    provider
+  );
+
   await setAddresses();
-  await withdrawFromPresale();
+  // await withdrawFromPresale();
   await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
@@ -940,9 +956,30 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
+  await time.increase(1800);
+  await buyBRATE(10);
+  await time.increase(1800);
+  await buyBRATE(10);
+  await time.increase(1800);
+  await buyBRATE(10);
+  await time.increase(1800);
+  await buyBRATE(10);
+  await time.increase(1800);
+  await sellBRATE(10);
+  await time.increase(1800);
+  await sellBRATE(3);
+  await time.increase(1800);
+  await sellBRATE(7);
+  await time.increase(1800);
+  await sellBRATE(1.62);
+
+  console.log(
+    await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
+  );
+
   // await sendBRATEAndBSHAREToPresaleDistributor();
-  await setRewardPoolAndInitialize();
-  await stakeBSHAREINBoardroom();
+  // await setRewardPoolAndInitialize();
+  // await stakeBSHAREINBoardroom();
 
   // test logic
 
@@ -961,9 +998,6 @@ const main = async () => {
   // await unStakeInSharePool();
   // await time.increase(6 * 3600);
   // await allocateSeigniorage();
-
-
-
 };
 
 main()

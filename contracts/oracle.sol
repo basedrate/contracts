@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPool.sol";
@@ -19,23 +19,22 @@ contract Oracle is Ownable {
         token1 = pair.token1();
     }
 
-            function observationLength(
-    ) external view returns (uint256 lenght) {
-        lenght = pair.observationLength();
+    function observationLength() external view returns (uint256 length) {
+        length = pair.observationLength();
     }
-
 
     function consult(
         address _token,
         uint256 _amountIn
     ) external view returns (uint256 amountOut) {
         uint256 currentWindow;
-        uint256 lenght = pair.observationLength();
-        if (lenght <= window) {
+        uint256 length = pair.observationLength();
+        if (length <= 2) {
             amountOut = 1 ether;
             return amountOut;
-        }
-        if (lenght > window) {
+        } else if (length <= window + 1) {
+            currentWindow = length - 1;
+        } else if (length > window + 1) {
             currentWindow = window;
         }
         if (_token == token0) {
@@ -51,12 +50,14 @@ contract Oracle is Ownable {
         uint256 _amountIn
     ) external view returns (uint256 amountOut) {
         uint256 currentWindow;
-        uint256 lenght = pair.observationLength();
-        if (lenght <= windowTwap) {
+        uint256 length = pair.observationLength();
+        console.log("length", length);
+        if (length <= 2) {
             amountOut = 1 ether;
             return amountOut;
-        }
-        if (lenght > windowTwap) {
+        } else if (length <= windowTwap + 1) {
+            currentWindow = length - 1;
+        } else if (length > windowTwap + 1) {
             currentWindow = windowTwap;
         }
         if (_token == token0) {

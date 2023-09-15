@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 interface IBasedRateSale {
     struct UserData {
@@ -12,6 +12,8 @@ interface IBasedRateSale {
     }
 
     function users(address _user) external view returns (UserData memory);
+
     function userIndex(uint256 index) external view returns (address);
+
     function userCount() external view returns (uint256);
 }

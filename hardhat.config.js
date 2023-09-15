@@ -17,10 +17,7 @@ module.exports = {
     },
     baseMain: {
       url: `https://rpc.notadegen.com/base`,
-      accounts: [
-        process.env.privateKey,
-        process.env.privateKeyRef,
-      ],
+      accounts: [process.env.privateKey, process.env.privateKeyRef],
     },
   },
   etherscan: {
@@ -50,11 +47,11 @@ module.exports = {
         },
       },
       {
-        version: "0.8.17",
+        version: "0.8.19",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1000,
+            runs: 200,
           },
         },
       },

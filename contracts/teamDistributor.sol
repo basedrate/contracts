@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.17;
+pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 
 interface ISHARE {
     function setDevFund(address _devFund) external;
+
     function claimRewards() external;
 }
 
@@ -40,8 +41,8 @@ contract TeamDistributor is Ownable {
     }
 
     modifier onlyCaller() {
-         require(caller == msg.sender);
-        _; 
+        require(caller == msg.sender);
+        _;
     }
 
     function setDevFund(address _devfund) public onlyOwner {
