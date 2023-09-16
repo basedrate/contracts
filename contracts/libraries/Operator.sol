@@ -1,10 +1,8 @@
-
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.19;
 
-import "./Context.sol";
-import "./Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Operator is Context, Ownable {
     address private _operator;
@@ -14,9 +12,8 @@ contract Operator is Context, Ownable {
         address indexed newOperator
     );
 
-    constructor() internal {
-        _operator = _msgSender();
-        emit OperatorTransferred(address(0), _operator);
+    constructor() {
+        _transferOperator(_msgSender());
     }
 
     function operator() public view returns (address) {
@@ -25,7 +22,7 @@ contract Operator is Context, Ownable {
 
     modifier onlyOperator() {
         require(
-            _operator == msg.sender,
+            _operator == _msgSender(),
             "operator: caller is not the operator"
         );
         _;
@@ -35,16 +32,16 @@ contract Operator is Context, Ownable {
         return _msgSender() == _operator;
     }
 
-    function transferOperator(address newOperator_) public onlyOwner {
-        _transferOperator(newOperator_);
+    function transferOperator(address newOperator) public onlyOwner {
+        _transferOperator(newOperator);
     }
 
-    function _transferOperator(address newOperator_) internal {
+    function _transferOperator(address newOperator) internal {
         require(
-            newOperator_ != address(0),
+            newOperator != address(0),
             "operator: zero address given for new operator"
         );
-        emit OperatorTransferred(address(0), newOperator_);
-        _operator = newOperator_;
+        emit OperatorTransferred(address(0), newOperator);
+        _operator = newOperator;
     }
 }

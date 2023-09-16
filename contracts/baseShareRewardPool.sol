@@ -7,14 +7,19 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IGauge.sol";
+import "./libraries/Operator.sol";
 
-contract BaseShareRewardPool is ReentrancyGuard {
+interface IBSHARE is IERC20 {
+    function mint(address account, uint256 amount) external;
+}
+
+contract BaseShareRewardPool is ReentrancyGuard, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
-
-    // governance
-    address public operator;
+    using SafeERC20 for IBSHARE;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     // Info of each user.
     struct UserInfo {
@@ -28,23 +33,25 @@ contract BaseShareRewardPool is ReentrancyGuard {
         uint256 allocPoint; // How many allocation points assigned to this pool. BaseShare to distribute per block.
         uint256 lastRewardTime; // Last time that baseShare distribution occurs.
         uint16 depositFeeBP; //depositfee
+        uint16 withdrawFeeBP; //withdrawfee
         uint256 accTokensPerShare; // Accumulated baseShare per share, times 1e18. See below.
         bool isStarted; // if lastRewardTime has passed
-        bool hasGauge;
         IGauge gauge; // Gauge associated with the pool.
         uint256 lpBalance;
     }
 
     struct PoolView {
         uint256 pid;
+        address token;
         uint256 allocPoint;
         uint256 lastRewardTime;
-        uint256 rewardsPerSecond;
+        uint16 depositFeeBP;
+        uint16 withdrawFeeBP;
         uint256 accTokensPerShare;
         bool isStarted;
-        uint256 totalAmount;
-        address token;
-        uint16 depositFeeBP;
+        address gauge;
+        uint256 lpBalance;
+        uint256 rewardsPerSecond;
     }
 
     struct UserView {
@@ -52,13 +59,15 @@ contract BaseShareRewardPool is ReentrancyGuard {
         uint256 stakedAmount;
         uint256 unclaimedRewards;
         uint256 lpBalance;
+        uint256 allowance;
     }
 
-    IERC20 public baseShare;
-    bool public started;
+    IBSHARE public baseShare;
+    // bool public started;
 
     // Info of each pool.
     PoolInfo[] public poolInfo;
+    EnumerableSet.AddressSet private lpTokens;
 
     // Info of each user that stakes LP tokens.
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
@@ -73,11 +82,12 @@ contract BaseShareRewardPool is ReentrancyGuard {
     uint256 public poolEndTime;
 
     address public feeAddress;
+    address public devAddress;
+    uint256 public feePercent;
+    uint256 public devPercent;
 
-    uint256 public sharesPerSecond = 0.00009384384 ether; // 3000 baseShare / (370 days * 24h * 60min * 60s)
-    uint256 public runningTime = 370 days; // 370 days
-    uint256 public constant TOTAL_REWARDS = 3150 ether; // 3000 baseShare farm + referral reward 150 baseShare
-    uint256 public constant TOTAL_REFERRAL = 150 ether;
+    uint256 public sharesPerSecond; // = 0.00009384384 ether; // 3000 baseShare / (370 days * 24h * 60min * 60s)
+
     uint256 public referralRate = 500;
     mapping(address => address) public referral; // referral => referrer
     mapping(address => uint256) public referralEarned; // for stats
@@ -92,47 +102,36 @@ contract BaseShareRewardPool is ReentrancyGuard {
     event RewardPaid(address indexed user, uint256 amount);
 
     constructor(
-        address _baseShare,
-        uint256 _poolStartTime,
-        address _feeAddress
+        IBSHARE _baseShare,
+        address _feeAddress,
+        address _devAddress,
+        uint256 _feePercent,
+        uint256 _devPercent,
+        uint256 _sharesPerSecond,
+        uint256 _poolStartTime
     ) {
-        require(block.timestamp < _poolStartTime, "late");
-        require(_feeAddress != address(0), "zero address not allowed");
+        require(block.timestamp < _poolStartTime, "BaseShareRewardPool: late");
+        require(
+            _feeAddress != address(0) &&
+                _devAddress != address(0) &&
+                address(_baseShare) != address(0),
+            "BaseShareRewardPool: Zero address not allowed"
+        );
+        require(
+            _devPercent <= 1000 && _feePercent <= 1000,
+            "BaseShareRewardPool: Invalid percentages"
+        );
+        baseShare = _baseShare;
         feeAddress = _feeAddress;
-        if (_baseShare != address(0)) baseShare = IERC20(_baseShare);
+        devAddress = _devAddress;
+        feePercent = _feePercent;
+        devPercent = _devPercent;
+        sharesPerSecond = _sharesPerSecond;
         poolStartTime = _poolStartTime;
-        poolEndTime = poolStartTime + runningTime;
-        operator = msg.sender;
     }
 
-    function initializer() public onlyOperator {
-        require(!started, "contract initialized");
-        uint256 shareBalance = baseShare.balanceOf(address(this));
-        uint256 rewardCalculated = (runningTime * sharesPerSecond) +
-            TOTAL_REFERRAL;
-        require(
-            shareBalance >= TOTAL_REWARDS && rewardCalculated <= shareBalance,
-            "rewards missing"
-        );
-        started = true;
-    }
-
-    modifier onlyOperator() {
-        require(
-            operator == msg.sender,
-            "BaseShareRewardPool: caller is not the operator"
-        );
-        _;
-    }
-
-    function checkPoolDuplicate(IERC20 _token) internal view {
-        uint256 length = poolInfo.length;
-        for (uint256 pid = 0; pid < length; ++pid) {
-            require(
-                poolInfo[pid].token != _token,
-                "BaseShareRewardPool: existing pool?"
-            );
-        }
+    function poolLength() external view returns (uint256) {
+        return poolInfo.length;
     }
 
     // Add a new lp to the pool
@@ -142,38 +141,46 @@ contract BaseShareRewardPool is ReentrancyGuard {
         bool _withUpdate,
         uint256 _lastRewardTime,
         uint16 _depositFeeBP,
-        bool _hasGauge,
+        uint16 _withdrawFeeBP,
         IGauge _gauge
     ) public onlyOperator {
-        if (_hasGauge) {
+        require(
+            Address.isContract(address(_token)),
+            "BaseShareRewardPool: LP token must be a valid contract"
+        );
+        if (address(_gauge) != address(0)) {
             IERC20 stakingToken = IERC20(_gauge.stakingToken());
-            require(_token == stakingToken, "incorrect gauge!");
+            require(
+                _token == stakingToken,
+                "BaseShareRewardPool: Incorrect gauge!"
+            );
         }
-        if (!_hasGauge) {
-            require(address(_gauge) == address(this), "incorrect gauge!");
-        }
-        require(_depositFeeBP <= 400, "add: invalid deposit fee basis points");
-        checkPoolDuplicate(_token);
+        require(
+            _depositFeeBP <= 400 && _withdrawFeeBP <= 400,
+            "BaseShareRewardPool: Invalid deposit or withdraw fee basis points"
+        );
+        require(
+            !lpTokens.contains(address(_token)),
+            "BaseShareRewardPool: LP already added"
+        );
+
         if (_withUpdate) {
             massUpdatePools();
         }
+
         if (block.timestamp < poolStartTime) {
             // chef is sleeping
-            if (_lastRewardTime == 0) {
+            if (_lastRewardTime < poolStartTime) {
                 _lastRewardTime = poolStartTime;
-            } else {
-                if (_lastRewardTime < poolStartTime) {
-                    _lastRewardTime = poolStartTime;
-                }
             }
         } else {
             // chef is cooking
-            if (_lastRewardTime == 0 || _lastRewardTime < block.timestamp) {
+            if (_lastRewardTime < block.timestamp) {
                 _lastRewardTime = block.timestamp;
             }
         }
-        bool _isStarted = (_lastRewardTime <= poolStartTime) ||
-            (_lastRewardTime <= block.timestamp);
+        bool _isStarted = (block.timestamp >= poolStartTime) &&
+            (block.timestamp >= _lastRewardTime);
         poolInfo.push(
             PoolInfo({
                 token: _token,
@@ -182,7 +189,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
                 accTokensPerShare: 0,
                 isStarted: _isStarted,
                 depositFeeBP: _depositFeeBP,
-                hasGauge: _hasGauge,
+                withdrawFeeBP: _withdrawFeeBP,
                 gauge: _gauge,
                 lpBalance: 0
             })
@@ -190,15 +197,21 @@ contract BaseShareRewardPool is ReentrancyGuard {
         if (_isStarted) {
             totalAllocPoint = totalAllocPoint.add(_allocPoint);
         }
+
+        lpTokens.add(address(_token));
     }
 
     // Update the given pool's baseShare allocation point. Can only be called by the owner.
     function set(
         uint256 _pid,
         uint256 _allocPoint,
-        uint16 _depositFeeBP
+        uint16 _depositFeeBP,
+        uint16 _withdrawFeeBP
     ) public onlyOperator {
-        require(_depositFeeBP <= 400, "add: invalid deposit fee basis points");
+        require(
+            _depositFeeBP <= 400 && _withdrawFeeBP <= 400,
+            "BaseShareRewardPool: Invalid deposit or withdraw fee basis points"
+        );
         massUpdatePools();
         PoolInfo storage pool = poolInfo[_pid];
         if (pool.isStarted) {
@@ -208,6 +221,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
         }
         pool.allocPoint = _allocPoint;
         poolInfo[_pid].depositFeeBP = _depositFeeBP;
+        poolInfo[_pid].withdrawFeeBP = _withdrawFeeBP;
     }
 
     // Return accumulate rewards over the given _from to _to block.
@@ -298,8 +312,8 @@ contract BaseShareRewardPool is ReentrancyGuard {
         address referrer
     ) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
-        bool isGauge = pool.hasGauge;
-        address staker = msg.sender;
+        bool isGauge = address(pool.gauge) != address(0);
+        address staker = _msgSender();
         if (isGauge) {
             _depositWithGauge(_pid, _amount, referrer, staker);
         } else {
@@ -314,7 +328,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
         address _staker
     ) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
-        bool isGauge = pool.hasGauge;
+        bool isGauge = address(pool.gauge) != address(0);
         address staker = _staker;
         if (isGauge) {
             _depositWithGauge(_pid, _amount, referrer, staker);
@@ -325,7 +339,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
 
     function withdraw(uint256 _pid, uint256 _amount) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
-        bool isGauge = pool.hasGauge;
+        bool isGauge = address(pool.gauge) != address(0);
         if (isGauge) {
             _withdrawWithGauge(_pid, _amount);
         } else {
@@ -339,23 +353,21 @@ contract BaseShareRewardPool is ReentrancyGuard {
         address referrer,
         address _staker
     ) private {
-        require(started, "contract not initialized");
-        address _sender = _staker;
         require(
             referrer != address(0) &&
-                referrer != _sender &&
+                referrer != _staker &&
                 referrer != address(this),
             "invalid referrer"
         );
 
-        if (referral[_sender] == address(0)) {
-            referral[_sender] = referrer;
+        if (referral[_staker] == address(0)) {
+            referral[_staker] = referrer;
         } else {
-            referrer = referral[_sender];
+            referrer = referral[_staker];
         }
 
         PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][_sender];
+        UserInfo storage user = userInfo[_pid][_staker];
         updatePool(_pid);
         if (user.amount > 0) {
             uint256 _pending = user
@@ -370,12 +382,12 @@ contract BaseShareRewardPool is ReentrancyGuard {
                     referralAmount;
                 safeBaseShareTransfer(referrer, referralAmount);
 
-                safeBaseShareTransfer(_sender, _pending);
-                emit RewardPaid(_sender, _pending);
+                safeBaseShareTransfer(_staker, _pending);
+                emit RewardPaid(_staker, _pending);
             }
         }
         if (_amount > 0) {
-            pool.token.safeTransferFrom(_sender, address(this), _amount);
+            pool.token.safeTransferFrom(_msgSender(), address(this), _amount);
         }
         if (pool.depositFeeBP > 0) {
             uint256 depositFee = _amount.mul(pool.depositFeeBP).div(10000);
@@ -388,7 +400,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
         }
         user.rewardDebt = user.amount.mul(pool.accTokensPerShare).div(1e18);
 
-        emit Deposit(_sender, _pid, _amount);
+        emit Deposit(_staker, _pid, _amount);
     }
 
     function _depositWithGauge(
@@ -397,23 +409,21 @@ contract BaseShareRewardPool is ReentrancyGuard {
         address referrer,
         address _staker
     ) private {
-        require(started, "contract not initialized");
-        address _sender = _staker;
         require(
             referrer != address(0) &&
-                referrer != _sender &&
+                referrer != _staker &&
                 referrer != address(this),
             "invalid referrer"
         );
 
-        if (referral[_sender] == address(0)) {
-            referral[_sender] = referrer;
+        if (referral[_staker] == address(0)) {
+            referral[_staker] = referrer;
         } else {
-            referrer = referral[_sender];
+            referrer = referral[_staker];
         }
 
         PoolInfo storage pool = poolInfo[_pid];
-        UserInfo storage user = userInfo[_pid][_sender];
+        UserInfo storage user = userInfo[_pid][_staker];
         updatePool(_pid);
         if (user.amount > 0) {
             uint256 _pending = user
@@ -428,12 +438,12 @@ contract BaseShareRewardPool is ReentrancyGuard {
                     referralAmount;
                 safeBaseShareTransfer(referrer, referralAmount);
 
-                safeBaseShareTransfer(_sender, _pending);
-                emit RewardPaid(_sender, _pending);
+                safeBaseShareTransfer(_staker, _pending);
+                emit RewardPaid(_staker, _pending);
             }
         }
         if (_amount > 0) {
-            pool.token.safeTransferFrom(_sender, address(this), _amount);
+            pool.token.safeTransferFrom(_msgSender(), address(this), _amount);
         }
         if (pool.depositFeeBP > 0) {
             uint256 depositFee = _amount.mul(pool.depositFeeBP).div(10000);
@@ -450,11 +460,11 @@ contract BaseShareRewardPool is ReentrancyGuard {
         address _gauge = address(pool.gauge);
         pool.token.approve(_gauge, toDeposit);
         pool.gauge.deposit(toDeposit);
-        emit Deposit(_sender, _pid, _amount);
+        emit Deposit(_staker, _pid, _amount);
     }
 
     function _withdrawNoGauge(uint256 _pid, uint256 _amount) private {
-        address _sender = msg.sender;
+        address _sender = _msgSender();
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -478,7 +488,16 @@ contract BaseShareRewardPool is ReentrancyGuard {
         }
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
-            pool.token.safeTransfer(_sender, _amount);
+
+            if (pool.withdrawFeeBP > 0) {
+                uint256 withdrawFee = _amount.mul(pool.withdrawFeeBP).div(
+                    10000
+                );
+                pool.token.safeTransfer(feeAddress, withdrawFee);
+                pool.token.safeTransfer(_sender, _amount.sub(withdrawFee));
+            } else {
+                pool.token.safeTransfer(_sender, _amount);
+            }
         }
         user.rewardDebt = user.amount.mul(pool.accTokensPerShare).div(1e18);
         pool.lpBalance -= _amount;
@@ -486,7 +505,7 @@ contract BaseShareRewardPool is ReentrancyGuard {
     }
 
     function _withdrawWithGauge(uint256 _pid, uint256 _amount) private {
-        address _sender = msg.sender;
+        address _sender = _msgSender();
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_sender];
         require(user.amount >= _amount, "withdraw: not good");
@@ -511,7 +530,15 @@ contract BaseShareRewardPool is ReentrancyGuard {
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             pool.gauge.withdraw(_amount);
-            pool.token.safeTransfer(_sender, _amount);
+            if (pool.withdrawFeeBP > 0) {
+                uint256 withdrawFee = _amount.mul(pool.withdrawFeeBP).div(
+                    10000
+                );
+                pool.token.safeTransfer(feeAddress, withdrawFee);
+                pool.token.safeTransfer(_sender, _amount.sub(withdrawFee));
+            } else {
+                pool.token.safeTransfer(_sender, _amount);
+            }
         }
         user.rewardDebt = user.amount.mul(pool.accTokensPerShare).div(1e18);
         pool.lpBalance -= _amount;
@@ -521,26 +548,24 @@ contract BaseShareRewardPool is ReentrancyGuard {
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
-        bool isGauge = pool.hasGauge;
-
+        UserInfo storage user = userInfo[_pid][_msgSender()];
+        bool isGauge = address(pool.gauge) != address(0);
+        uint256 _amount = user.amount;
+        require(_amount > 0, "BaseShareRewardPool: User has no amount");
+        user.amount = 0;
+        user.rewardDebt = 0;
         if (isGauge) {
-            UserInfo storage user = userInfo[_pid][msg.sender];
-            uint256 _amount = user.amount;
-            user.amount = 0;
-            user.rewardDebt = 0;
             pool.gauge.withdraw(_amount);
-            pool.token.safeTransfer(msg.sender, _amount);
-            pool.lpBalance -= _amount;
-            emit EmergencyWithdraw(msg.sender, _pid, _amount);
-        } else {
-            UserInfo storage user = userInfo[_pid][msg.sender];
-            uint256 _amount = user.amount;
-            user.amount = 0;
-            user.rewardDebt = 0;
-            pool.token.safeTransfer(msg.sender, _amount);
-            pool.lpBalance -= _amount;
-            emit EmergencyWithdraw(msg.sender, _pid, _amount);
         }
+        if (pool.withdrawFeeBP > 0) {
+            uint256 withdrawFee = _amount.mul(pool.withdrawFeeBP).div(10000);
+            pool.token.safeTransfer(feeAddress, withdrawFee);
+            pool.token.safeTransfer(_msgSender(), _amount.sub(withdrawFee));
+        } else {
+            pool.token.safeTransfer(_msgSender(), _amount);
+        }
+        pool.lpBalance -= _amount;
+        emit EmergencyWithdraw(_msgSender(), _pid, _amount);
     }
 
     // Safe baseShare transfer function, just in case if rounding error causes pool to not have enough baseShare.
@@ -563,17 +588,40 @@ contract BaseShareRewardPool is ReentrancyGuard {
         rewardToken.safeTransfer(feeAddress, amoutToSend);
     }
 
-    function setOperator(address _operator) external onlyOperator {
-        operator = _operator;
-    }
-
     function setFeeAddress(address _feeAddress) external onlyOperator {
-        require(_feeAddress != address(0), "zero address not allowed");
+        require(
+            _feeAddress != address(0),
+            "BaseShareRewardPool: Zero address not allowed"
+        );
         feeAddress = _feeAddress;
     }
 
+    function setFeePercent(uint256 _feePercent) external onlyOperator {
+        require(
+            _feePercent <= 1000,
+            "BaseShareRewardPool: Zero address not allowed"
+        );
+        feePercent = _feePercent;
+    }
+
+    function setDevAddress(address _devAddress) external onlyOperator {
+        require(
+            _devAddress != address(0),
+            "BaseShareRewardPool: Invalid percentages"
+        );
+        devAddress = _devAddress;
+    }
+
+    function setDevPercent(uint256 _devPercent) external onlyOperator {
+        require(
+            _devPercent <= 1000,
+            "BaseShareRewardPool: Zero address not allowed"
+        );
+        devPercent = _devPercent;
+    }
+
     function getPoolView(uint256 pid) public view returns (PoolView memory) {
-        require(pid < poolInfo.length, "Staking: pid out of range");
+        require(pid < poolInfo.length, "BaseShareRewardPool: pid out of range");
         PoolInfo memory pool = poolInfo[pid];
         uint256 rewardsPerSecond = pool.allocPoint.mul(sharesPerSecond).div(
             totalAllocPoint
@@ -581,14 +629,16 @@ contract BaseShareRewardPool is ReentrancyGuard {
         return
             PoolView({
                 pid: pid,
+                token: address(pool.token),
                 allocPoint: pool.allocPoint,
                 lastRewardTime: pool.lastRewardTime,
-                rewardsPerSecond: rewardsPerSecond,
+                depositFeeBP: pool.depositFeeBP,
+                withdrawFeeBP: pool.withdrawFeeBP,
                 accTokensPerShare: pool.accTokensPerShare,
                 isStarted: pool.isStarted,
-                totalAmount: pool.lpBalance,
-                token: address(pool.token),
-                depositFeeBP: pool.depositFeeBP
+                gauge: address(pool.gauge),
+                lpBalance: pool.lpBalance,
+                rewardsPerSecond: rewardsPerSecond
             });
     }
 
@@ -613,7 +663,8 @@ contract BaseShareRewardPool is ReentrancyGuard {
                 pid: pid,
                 stakedAmount: user.amount,
                 unclaimedRewards: unclaimedRewards,
-                lpBalance: lpBalance
+                lpBalance: lpBalance,
+                allowance: IERC20(pool.token).allowance(account, address(this))
             });
     }
 

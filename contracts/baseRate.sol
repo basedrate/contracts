@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.0 <0.8.0;
+pragma solidity 0.8.19;
 
 import "./interfaces/IOracle.sol";
 import "./libraries/SafeMath8.sol";
-import "./libraries/SafeMath.sol";
-import "./libraries/ERC20Burnable.sol";
 import "./libraries/Operator.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 import "hardhat/console.sol";
 
@@ -66,14 +66,16 @@ contract BaseRate is ERC20Burnable, Operator {
     mapping(address => bool) public excludedAddresses;
 
     modifier onlyTaxManager() {
-        require(taxManager == msg.sender, "Caller is not the tax office");
+        require(taxManager == _msgSender(), "Caller is not the tax office");
         _;
     }
 
     bool public rewardPoolDistributed = false;
 
-    constructor() public ERC20("BasedRate.io", "BRATE") {
-        taxManager = msg.sender;
+    constructor() ERC20("BasedRate.io", "BRATE") {
+        taxManager = _msgSender();
+        _mint(_msgSender(), INITIAL_PRESALE_DISTRIBUTION);
+        _mint(_msgSender(), INITIAL_LIQUIDITY_DISTRIBUTION);
     }
 
     /* ============= Taxation ============= */
@@ -131,22 +133,21 @@ contract BaseRate is ERC20Burnable, Operator {
     }
 
     function _updateTaxRate(uint256 _bratePrice) internal returns (uint256) {
-        if (autoCalculateTax) {
-            for (
-                uint8 tierId = uint8(getTaxTiersTwapsCount()).sub(1);
-                tierId >= 0;
-                --tierId
-            ) {
-                if (_bratePrice >= taxTiersTwaps[tierId]) {
-                    require(
-                        taxTiersRates[tierId] < 10000,
-                        "tax equal or bigger to 100%"
-                    );
-                    taxRate = taxTiersRates[tierId];
-                    return taxTiersRates[tierId];
-                }
+        for (
+            uint8 tierId = uint8(getTaxTiersTwapsCount()).sub(1);
+            tierId >= 0;
+            --tierId
+        ) {
+            if (_bratePrice >= taxTiersTwaps[tierId]) {
+                require(
+                    taxTiersRates[tierId] < 10000,
+                    "tax equal or bigger to 100%"
+                );
+                taxRate = taxTiersRates[tierId];
+                return taxTiersRates[tierId];
             }
         }
+        return 0;
     }
 
     function setLP(address _LP, bool _isLP) public onlyTaxManager {
@@ -189,30 +190,19 @@ contract BaseRate is ERC20Burnable, Operator {
     }
 
     function mint(
-        address recipient_,
-        uint256 amount_
+        address recipient,
+        uint256 amount
     ) public onlyOperator returns (bool) {
-        _mint(recipient_, amount_);
+        _mint(recipient, amount);
         return true;
     }
 
-    function burn(uint256 amount) public override {
-        super.burn(amount);
-    }
-
-    function burnFrom(
-        address account,
+    function mintForBribes(
+        address recipient,
         uint256 amount
-    ) public override onlyOperator {
-        super.burnFrom(account, amount);
-    }
-
-    function distributeReward(address _initializer) external onlyOperator {
-        require(!rewardPoolDistributed, "only can distribute once");
-        require(_initializer != address(0), "!_initializer");
-        rewardPoolDistributed = true;
-        _mint(_initializer, INITIAL_PRESALE_DISTRIBUTION);
-        _mint(_initializer, INITIAL_LIQUIDITY_DISTRIBUTION);
+    ) public onlyOwner returns (bool) {
+        _mint(recipient, amount);
+        return true;
     }
 
     function transferFrom(
@@ -237,7 +227,7 @@ contract BaseRate is ERC20Burnable, Operator {
         address recipient,
         uint256 amount
     ) public virtual override returns (bool) {
-        address sender = msg.sender;
+        address sender = _msgSender();
         _transferBRATE(sender, recipient, amount);
         return true;
     }
@@ -271,7 +261,7 @@ contract BaseRate is ERC20Burnable, Operator {
             currentTaxRate = taxRate;
         }
         if (
-            (isLP[recipient] || isLP[sender]) &&
+            (isLP[recipient]) &&
             currentTaxRate != 0 &&
             !excludedAddresses[sender] &&
             !excludedAddresses[recipient]
@@ -286,7 +276,7 @@ contract BaseRate is ERC20Burnable, Operator {
         IERC20 _token,
         uint256 _amount,
         address _to
-    ) external onlyOperator {
+    ) external onlyOwner {
         _token.transfer(_to, _amount);
     }
 }
