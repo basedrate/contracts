@@ -589,6 +589,21 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         rewardToken.safeTransfer(feeAddress, amoutToSend);
     }
 
+    function getExternalSwapFees(uint256 _pid, bool withClaim) external onlyOperator {
+        PoolInfo storage pool = poolInfo[_pid];
+        IPool pool_lp = IPool(address(pool.token));
+        if(withClaim) {
+        pool_lp.claimFees();
+        }
+        IERC20 token0 = IERC20(pool_lp.token0());
+        IERC20 token1 = IERC20(pool_lp.token1());
+        require(token0 != pool.token && token1 != pool.token, "pool.token");
+        uint256 balanceToken0 = token0.balanceOf(address(this));
+        uint256 balanceToken1 = token1.balanceOf(address(this));
+        token0.safeTransfer(feeAddress, balanceToken0);
+        token1.safeTransfer(feeAddress, balanceToken1);
+    }
+
     function setFeeAddress(address _feeAddress) external onlyOperator {
         require(
             _feeAddress != address(0),
