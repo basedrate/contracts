@@ -275,20 +275,19 @@ contract Treasury is ContractGuard, Operator {
 
     function getBondDiscountRate() public view returns (uint256 _rate) {
         uint256 _baseRatePrice = getBaseRatePrice();
-        uint256 scaledBaseRatePriceOne = baseRatePriceOne + 0.03 ether;
-        if (_baseRatePrice <= scaledBaseRatePriceOne) {
+        if (_baseRatePrice <= baseRatePriceOne) {
             if (discountPercent == 0) {
                 // no discount
-                _rate = scaledBaseRatePriceOne;
+                _rate = baseRatePriceOne;
             } else {
-                uint256 _bondAmount = scaledBaseRatePriceOne.mul(1e18).div(
+                uint256 _bondAmount = baseRatePriceOne.mul(1e18).div(
                     _baseRatePrice
                 ); // to burn 1 BRATE
                 uint256 _discountAmount = _bondAmount
-                    .sub(scaledBaseRatePriceOne)
+                    .sub(baseRatePriceOne)
                     .mul(discountPercent)
                     .div(10000);
-                _rate = scaledBaseRatePriceOne.add(_discountAmount);
+                _rate = baseRatePriceOne.add(_discountAmount);
                 if (maxDiscountRate > 0 && _rate > maxDiscountRate) {
                     _rate = maxDiscountRate;
                 }
@@ -298,7 +297,6 @@ contract Treasury is ContractGuard, Operator {
 
     function getBondPremiumRate() public view returns (uint256 _rate) {
         uint256 _baseRatePrice = getBaseRatePrice();
-        uint256 scaledBaseRatePriceOne = baseRatePriceOne + 0.03 ether;
         if (_baseRatePrice > baseRatePriceCeiling) {
             uint256 _baseRatePricePremiumThreshold = baseRatePriceOne
                 .mul(premiumThreshold)
@@ -309,13 +307,13 @@ contract Treasury is ContractGuard, Operator {
                     .sub(baseRatePriceOne)
                     .mul(premiumPercent)
                     .div(10000);
-                _rate = scaledBaseRatePriceOne.add(_premiumAmount);
+                _rate = baseRatePriceOne.add(_premiumAmount);
                 if (maxPremiumRate > 0 && _rate > maxPremiumRate) {
                     _rate = maxPremiumRate;
                 }
             } else {
                 // no premium bonus
-                _rate = scaledBaseRatePriceOne;
+                _rate = baseRatePriceOne;
             }
         }
     }
@@ -335,7 +333,7 @@ contract Treasury is ContractGuard, Operator {
         boardroom = _boardroom;
         startTime = _startTime;
 
-        baseRatePriceOne = 0.97 ether; // This is to allow a PEG of 1 BRATE per 1 ETH
+        baseRatePriceOne = 10 ** 18; // This is to allow a PEG of 1 BRATE per 1 ETH
         baseRatePriceCeiling = baseRatePriceOne.mul(101).div(100);
 
         // Dynamic max expansion percent

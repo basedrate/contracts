@@ -107,11 +107,11 @@ contract BaseShare is ERC20Burnable, Operator {
         1.10e18
     ];
     uint256[] public taxTiersRates = [
-        600,
+        1000,
+        800,
+        700,
         500,
-        400,
-        300,
-        200,
+        250,
         100,
         0,
         0,
