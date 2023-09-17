@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./aerodrome/interfaces/IRouter.sol";
-import "./libraries/Operator.sol";
+import "./libraries/IsOperator.sol";
 import "./interfaces/IOracle.sol";
 import "./libraries/SafeMath8.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
