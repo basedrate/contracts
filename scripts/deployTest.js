@@ -258,7 +258,7 @@ const mintInitialSupplyAndAddLiquidity = async () => {
   const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseShare.address,
     WETH,
-    true,
+    false,
     AerodromeFactory
   );
 
@@ -297,6 +297,7 @@ const mintInitialSupplyAndAddLiquidity = async () => {
   tx = await baseRate.setLP(BRATE_ETH_LP, true);
   receipt = await tx.wait();
   tx = await baseShare.setLP(BSHARE_ETH_LP, true);
+  console.log()
   receipt = await tx.wait();
   console.log("BRATE_ETH_LP and BSHARE_ETH_LP added as LP");
 };
@@ -414,7 +415,7 @@ const setRewardPool = async () => {
   const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseShare.address,
     WETH,
-    true,
+    false,
     AerodromeFactory
   );
 
@@ -891,6 +892,8 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
 
 const buyBSHARE = async (amount, caller) => {
   console.log("\n*** BUYING BSHARE ***");
+  console.log("Tax ", await baseShare.taxRate());
+
   const baseRateRoute = createRoute(
     WETH,
     baseRate.address,
@@ -932,6 +935,8 @@ const buyBSHARE = async (amount, caller) => {
 
 const buyBRATE = async (amount) => {
   console.log("\n*** BUYING BRATE ***");
+  console.log("Tax ", await baseRate.taxRate());
+
   const baseRateRoute = createRoute(
     WETH,
     baseRate.address,
@@ -977,6 +982,9 @@ const buyBRATE = async (amount) => {
 
 const sellBRATE = async (amount, caller) => {
   console.log("\n*** SELLING BRATE ***");
+
+  console.log("Tax ", await baseRate.taxRate());
+
   tx = await baseRate
     .connect(caller)
     .approve(AerodromeRouter, ethers.constants.MaxUint256);
@@ -1023,6 +1031,8 @@ const sellBRATE = async (amount, caller) => {
 
 const sellBSHARE = async (amount, caller) => {
   console.log("\n*** SELLING BSHARE ***");
+
+  console.log("Tax ", await baseShare.taxRate());
 
   tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
   receipt = await tx.wait();
@@ -1162,6 +1172,39 @@ const setTeamAddresses = async () => {
   console.log("Team addresses have been set!");
 };
 
+const getTotalSupply = async () => {
+  console.log("\n*** TOTAL SUPPLY ***");
+  const totalSupplyRate = utils.formatEther(
+    await baseRate.totalSupply()
+  );
+  console.log("BRATE totalSupply:", totalSupplyRate);
+
+
+  const totalSupplyShare = utils.formatEther(
+    await baseShare.totalSupply()
+  );
+  console.log("BSHARE totalSupply:", totalSupplyShare);
+  
+};
+
+
+const getBalance = async () => {
+  console.log("\n*** Balance of ***");
+  const balanceRate = utils.formatEther(
+    await baseRate.balanceOf(deployer.address)
+  );
+  console.log("BRATE balanceOf:", balanceRate);
+
+
+  const balanceShare = utils.formatEther(
+    await baseShare.balanceOf(deployer.address)
+  );
+  console.log("BSHARE balanceOf:", balanceShare);
+  
+};
+
+
+
 
 const distibrute = async () => {
   console.log("\n*** DISTRIBUTING ***");
@@ -1226,12 +1269,28 @@ const main = async () => {
   await setParameters();
   await setOperators();
   // await disableTax();
-  await buyBRATE(0.1, deployer);
+
   await sellBRATE(0.1, deployer);
-  await buyBSHARE(0.1, deployer);
+  await sellBRATE(0.1, deployer);
+  await sellBRATE(0.1, deployer);
+  await sellBRATE(0.1, deployer);
+
+  await sellBSHARE(0.1, deployer);
+  await sellBSHARE(0.1, deployer);
   await sellBSHARE(0.1, deployer);
 
-  // await setRewardPool();
+  await getBalance();
+  await getTotalSupply();
+  await sellBSHARE(10, deployer);
+  await getTotalSupply();
+  await getBalance();
+
+
+
+
+  
+
+  await setRewardPool();
 
 
   // console.log(
