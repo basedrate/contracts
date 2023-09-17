@@ -449,6 +449,13 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         emit Withdraw(_sender, _pid, _amount);
     }
 
+        // function emergencyWithdrawGauge(uint256 _pid) public onlyOperator() {
+        // PoolInfo storage pool = poolInfo[_pid];
+        // UserInfo storage user = userInfo[_pid][_msgSender()];
+        // bool isGauge = address(pool.gauge) != address(0);
+        // require(isGauge, "no gauge to withdraw from")
+        // }
+
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
         PoolInfo storage pool = poolInfo[_pid];
