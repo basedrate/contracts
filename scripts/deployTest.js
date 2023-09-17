@@ -346,8 +346,9 @@ const setParameters = async () => {
     500
   );
   receipt = await tx.wait();
-  console.log("\n*** SETTING ORACLE in BASERATE ***");
+  console.log("\n*** SETTING ORACLE in TOKENS ***");
   tx = await baseRate.setOracle(oracle.address);
+  tx = await baseShare.setOracle(oracle.address);
   console.log(
     "\n*** EXCLUDING FROM FEE ***"
   );
@@ -888,8 +889,8 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   receipt = await tx.wait();
 };
 
-const buyBRATEBSHARE = async (amount, caller) => {
-  console.log("\n*** BUYING BRATE AND BSHARE ***");
+const buyBSHARE = async (amount, caller) => {
+  console.log("\n*** BUYING BSHARE ***");
   const baseRateRoute = createRoute(
     WETH,
     baseRate.address,
@@ -924,26 +925,6 @@ const buyBRATEBSHARE = async (amount, caller) => {
       utils.formatEther(await baseShare.balanceOf(caller.address))
     );
 
-    console.log(
-      "BRATE Balance before:",
-      utils.formatEther(await baseRate.balanceOf(caller.address))
-    );
-
-    const tx = await AerodromeRouterContract.connect(
-      caller
-    ).swapExactETHForTokensSupportingFeeOnTransferTokens(
-      0,
-      [baseRateRoute],
-      caller.address,
-      Math.floor(Date.now() / 1000) + 24 * 86400,
-      { value: utils.parseEther(amount.toString()) }
-    );
-    await tx.wait();
-
-    console.log(
-      "BRATE Balance after:",
-      utils.formatEther(await baseRate.balanceOf(caller.address))
-    );
   } catch (error) {
     console.error("Error in sellBSHARE:", error);
   }
@@ -1040,7 +1021,7 @@ const sellBRATE = async (amount, caller) => {
   }
 };
 
-const sellBSHARE = async (amount) => {
+const sellBSHARE = async (amount, caller) => {
   console.log("\n*** SELLING BSHARE ***");
 
   tx = await baseShare.approve(AerodromeRouter, ethers.constants.MaxUint256);
@@ -1055,23 +1036,23 @@ const sellBSHARE = async (amount) => {
   try {
     console.log(
       "BSHARE Balance before:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
+      utils.formatEther(await baseShare.balanceOf(caller.address))
     );
 
     const tx2 = await AerodromeRouterContract.connect(
-      deployer
-    ).swapExactTokensForETH(
+      caller
+    ).swapExactTokensForETHSupportingFeeOnTransferTokens(
       utils.parseEther(amount.toString()),
       0,
       [baseShareRoute],
-      deployer.address,
+      caller.address,
       Math.floor(Date.now() / 1000) + 24 * 86400
     );
     await tx2.wait();
 
     console.log(
       "BSHARE Balance after:",
-      utils.formatEther(await baseShare.balanceOf(deployer.address))
+      utils.formatEther(await baseShare.balanceOf(caller.address))
     );
   } catch (error) {
     console.error("Error in buyBRATEBSHARE:", error);
@@ -1247,7 +1228,10 @@ const main = async () => {
   // await disableTax();
   await buyBRATE(0.1, deployer);
   await sellBRATE(0.1, deployer);
+  await buyBSHARE(0.1, deployer);
+  await sellBSHARE(0.1, deployer);
 
+  // await setRewardPool();
 
 
   // console.log(
@@ -1255,7 +1239,7 @@ const main = async () => {
   // );
 
   // await sendBRATEAndBSHAREToPresaleDistributor();
-  await setRewardPool();
+
   await stakeBSHAREINBoardroom();
 
     // await testBonds(deployer);
