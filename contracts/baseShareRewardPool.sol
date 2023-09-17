@@ -142,6 +142,13 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         uint16 _withdrawFeeBP,
         IGauge _gauge
     ) public onlyOperator {
+        IPool pool_lp = IPool(address(_token));
+        IERC20 token0 = IERC20(pool_lp.token0());
+        IERC20 token1 = IERC20(pool_lp.token1());
+        require(
+            address(token0) != address(0) && address(token1) != address(0),
+            "BaseShareRewardPool: Only LP tokens "
+        );
         require(
             Address.isContract(address(_token)),
             "BaseShareRewardPool: LP token must be a valid contract"
@@ -449,12 +456,15 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         emit Withdraw(_sender, _pid, _amount);
     }
 
-        // function emergencyWithdrawGauge(uint256 _pid) public onlyOperator() {
-        // PoolInfo storage pool = poolInfo[_pid];
-        // UserInfo storage user = userInfo[_pid][_msgSender()];
-        // bool isGauge = address(pool.gauge) != address(0);
-        // require(isGauge, "no gauge to withdraw from")
-        // }
+    function emergencyWithdrawGauge(uint256 _pid) public onlyOperator() {
+            // this will remove the Gauge from the pool permanetly
+            PoolInfo storage pool = poolInfo[_pid];
+            bool isGauge = address(pool.gauge) != address(0);
+            require(isGauge, "no gauge to withdraw from");
+            uint256 _amount = pool.gauge.balanceOf(address(this));
+            pool.gauge.withdraw(_amount);
+            pool.gauge = IGauge(address(0));
+    }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
     function emergencyWithdraw(uint256 _pid) public nonReentrant {
