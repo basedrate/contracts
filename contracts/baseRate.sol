@@ -70,6 +70,11 @@ contract BaseRate is ERC20Burnable, Operator {
         _;
     }
 
+      function setTaxManager(address _taxManager) public onlyTaxManager {
+    taxManager = _taxManager;
+
+  }
+
     bool public rewardPoolDistributed = false;
 
     constructor() ERC20("BasedRate.io", "BRATE") {

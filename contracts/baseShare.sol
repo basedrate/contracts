@@ -34,7 +34,13 @@ contract BaseShare is ERC20Burnable, Operator {
          BRATE = _BRATE;
         _mint(_msgSender(), PRESALE_ALLOCATION);
         _mint(_msgSender(), LIQUIDITY_ALLOCATION);
+        taxManager = _msgSender();
     }
+
+  function setTaxManager(address _taxManager) public onlyTaxManager {
+    taxManager = _taxManager;
+
+  }
 
   function _burnBRATE(uint256 taxAmount) internal  {
 
@@ -64,9 +70,7 @@ contract BaseShare is ERC20Burnable, Operator {
     );
 
     uint256 amountToBurn = IERC20(BRATE).balanceOf(address(this));
-    IERC20(BRATE).approve(address(this), amountToBurn);
-    IBasisAsset(BRATE).burnFrom(address(this), amountToBurn);
-
+    IBasisAsset(BRATE).burn(amountToBurn);
     }
 
 

@@ -91,7 +91,6 @@ contract TeamDistributor is Ownable {
     function automatedDistribution() external onlyCaller {
         uint256 totalBrate = 0;
         uint256 totalBshare = 0;
-        SHARE.claimRewards();
         require(team.length <= getArrayLimit(), "Array length exceeds limit");
         IERC20 brate = IERC20(BRATE);
         IERC20 bshare = IERC20(BSHARE);

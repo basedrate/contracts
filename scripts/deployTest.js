@@ -34,7 +34,7 @@ let baseRate,
   brate_eth_lp,
   bshare_eth_lp; //contracts
 let presaleContractBalance; //values
-
+const sharePerSecond = 93843840000000;
 const Presale = "0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659";
 let AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
 let AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
@@ -113,7 +113,7 @@ const deployContracts = async () => {
   await baseRate.deployed();
   console.log(`BaseRate deployed to ${baseRate.address}`);
   const BaseShare = await ethers.getContractFactory("BaseShare", deployer);
-  baseShare = await BaseShare.deploy(startTime, teamDistributor.address);
+  baseShare = await BaseShare.deploy(baseRate.address);
   await baseShare.deployed();
   console.log(`BaseShare deployed to ${baseShare.address}`);
   const BaseBond = await ethers.getContractFactory("BaseBond", deployer);
@@ -131,10 +131,15 @@ const deployContracts = async () => {
     "BaseShareRewardPool",
     deployer
   );
+
   baseShareRewardPool = await BaseShareRewardPool.deploy(
     baseShare.address,
-    startTime,
-    communityFund.address
+    communityFund.address,
+    teamDistributor.address,
+    1000,
+    1000,
+    sharePerSecond,
+    startTime
   );
   await baseShareRewardPool.deployed();
   console.log(`BaseShareRewardPool deployed to ${baseShareRewardPool.address}`);
@@ -215,14 +220,10 @@ const withdrawFromPresale = async () => {
 
 const mintInitialSupplyAndAddLiquidity = async () => {
   console.log("\n*** MINTING INITIAL SUPPLY ***");
-  tx = await baseRate.distributeReward(deployer.address);
-  receipt = await tx.wait();
   console.log(
     "BRATE Balance:",
     utils.formatEther(await baseRate.balanceOf(deployer.address))
   );
-  tx = await baseShare.distributeReward(baseShareRewardPool.address);
-  receipt = await tx.wait();
   console.log(
     "BSHARE Balance:",
     utils.formatEther(await baseShare.balanceOf(deployer.address))
@@ -294,7 +295,9 @@ const mintInitialSupplyAndAddLiquidity = async () => {
 
   tx = await baseRate.setLP(BRATE_ETH_LP, true);
   receipt = await tx.wait();
-  console.log("BRATE_ETH_LP added as LP");
+  tx = await baseShare.setLP(BSHARE_ETH_LP, true);
+  receipt = await tx.wait();
+  console.log("BRATE_ETH_LP and BSHARE_ETH_LP added as LP");
 };
 
 const initializeBoardroom = async () => {
@@ -307,11 +310,12 @@ const initializeBoardroom = async () => {
   receipt = await tx.wait();
 };
 const initializeTreasury = async () => {
+
+
   console.log("\n*** INITIALIZING TREASURY ***");
   tx = await treasury.initialize(
     baseRate.address,
     baseBond.address,
-    baseShare.address,
     oracle.address,
     boardroom.address,
     startTime
@@ -321,14 +325,15 @@ const initializeTreasury = async () => {
 
 const setParameters = async () => {
   console.log("\n*** SETTING COMMUNITY FUND IN BASEDSHARE CONTRACT ***");
-  tx = await teamDistributor.sendCustomTransaction(
-    baseShare.address,
-    0,
-    "setTreasuryFund(address)",
-    utils.defaultAbiCoder.encode(["address"], [communityFund.address])
-  );
-  receipt = await tx.wait();
-  console.log("Community Fund:", await baseShare.communityFund());
+  // tx = await teamDistributor.sendCustomTransaction(
+  //   baseShare.address,
+  //   0,
+  //   "setTreasuryFund(address)",
+  //   utils.defaultAbiCoder.encode(["address"], [communityFund.address])
+  // );
+  // receipt = await tx.wait();
+  // console.log("Community Fund:", await baseShare.communityFund());
+  
   console.log("\n*** SETTING TOKENS IN TEAM DISTRIBUTOR ***");
   tx = await teamDistributor.setTokens(baseShare.address, baseRate.address);
   receipt = await tx.wait();
@@ -343,7 +348,7 @@ const setParameters = async () => {
   console.log("\n*** SETTING ORACLE in BASERATE ***");
   tx = await baseRate.setOracle(oracle.address);
   console.log(
-    "\n*** EXCLUDING treasury, boardroom, communityFund, teamDistributor, presaleDistributor  ***"
+    "\n*** EXCLUDING FROM FEE ***"
   );
   tx = await baseRate.excludeAddress(treasury.address);
   receipt = await tx.wait();
@@ -358,6 +363,25 @@ const setParameters = async () => {
   tx = await baseRate.enableAutoCalculateTax();
   receipt = await tx.wait();
   console.log("\n*** TAX ENABLED ***");
+
+
+  tx = await baseShare.excludeAddress(treasury.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(boardroom.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(communityFund.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(teamDistributor.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(presaleDistributor.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(baseShare.address);
+  receipt = await tx.wait();
+  tx = await baseShare.excludeAddress(baseShareRewardPool.address);
+  receipt = await tx.wait();
+  tx = await baseShare.enableAutoCalculateTax();
+  receipt = await tx.wait();
+  console.log("\n*** TAX ENABLED ***");
 };
 
 const setOperators = async () => {
@@ -368,7 +392,7 @@ const setOperators = async () => {
   receipt = await tx.wait();
   tx = await baseBond.transferOperator(treasury.address);
   receipt = await tx.wait();
-  tx = await baseShare.transferOperator(treasury.address);
+  tx = await baseShare.transferOperator(baseShareRewardPool.address);
   receipt = await tx.wait();
   tx = await boardroom.setOperator(treasury.address);
   receipt = await tx.wait();
@@ -1184,15 +1208,15 @@ const distibrute = async () => {
 };
 
 const main = async () => {
-  const { router, poolFactory } = await deployAERO();
-  AerodromeRouter = router;
-  AerodromeFactory = poolFactory;
-  AerodromeRouterContract = new ethers.Contract(router, RouterABI, provider);
-  AerodromeFactoryContract = new ethers.Contract(
-    poolFactory,
-    FactoryABI,
-    provider
-  );
+  // const { router, poolFactory } = await deployAERO();
+  // AerodromeRouter = router;
+  // AerodromeFactory = poolFactory;
+  // AerodromeRouterContract = new ethers.Contract(router, RouterABI, provider);
+  // AerodromeFactoryContract = new ethers.Contract(
+  //   poolFactory,
+  //   FactoryABI,
+  //   provider
+  // );
 
   await setAddresses();
   // await withdrawFromPresale();
@@ -1203,26 +1227,26 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  await time.increase(1800);
-  await buyBRATE(10);
-  await time.increase(1800);
-  await buyBRATE(10);
-  await time.increase(1800);
-  await buyBRATE(10);
-  await time.increase(1800);
-  await buyBRATE(10);
-  await time.increase(1800);
-  await sellBRATE(10);
-  await time.increase(1800);
-  await sellBRATE(3);
-  await time.increase(1800);
-  await sellBRATE(7);
-  await time.increase(1800);
-  await sellBRATE(1.62);
+  // await time.increase(1800);
+  // await buyBRATE(10);
+  // await time.increase(1800);
+  // await buyBRATE(10);
+  // await time.increase(1800);
+  // await buyBRATE(10);
+  // await time.increase(1800);
+  // await buyBRATE(10);
+  // await time.increase(1800);
+  // await sellBRATE(10);
+  // await time.increase(1800);
+  // await sellBRATE(3);
+  // await time.increase(1800);
+  // await sellBRATE(7);
+  // await time.increase(1800);
+  // await sellBRATE(1.62);
 
-  console.log(
-    await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
-  );
+  // console.log(
+  //   await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
+  // );
 
   // await sendBRATEAndBSHAREToPresaleDistributor();
   // await setRewardPoolAndInitialize();
@@ -1230,14 +1254,14 @@ const main = async () => {
 
 
   // test logic
-  await buyAERO_USDbC(1);
-  await buyAERO_USDbColdDev(1);
-  await AddLiquidityEthUSDColdDeployer();
-  await AddLiquidityEthUSDC();
-  await stakeInSharePool();
-  await stakeInSharePoolOldDev();
-  await unStakeInSharePool();
-  await unStakeInSharePoolOldDev();
+  // await buyAERO_USDbC(1);
+  // await buyAERO_USDbColdDev(1);
+  // await AddLiquidityEthUSDColdDeployer();
+  // await AddLiquidityEthUSDC();
+  // await stakeInSharePool();
+  // await stakeInSharePoolOldDev();
+  // await unStakeInSharePool();
+  // await unStakeInSharePoolOldDev();
   // await setTeamAddresses();
   // await time.increase(6 * 3600);
   // await allocateSeigniorage();
