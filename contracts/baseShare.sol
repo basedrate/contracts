@@ -16,7 +16,6 @@ interface IBasisAsset {
     function burnFrom(address from, uint256 amount) external;
 }
 
-
 contract BaseShare is ERC20Burnable, Operator {
     using SafeMath8 for uint8;
     using SafeMath for uint256;
@@ -24,72 +23,39 @@ contract BaseShare is ERC20Burnable, Operator {
 
     uint256 public constant PRESALE_ALLOCATION = 27.5 ether;
     uint256 public constant LIQUIDITY_ALLOCATION = 21 ether; // plus one
+    uint256 public constant DEV_FUND_POOL_ALLOCATION = 400 ether;
+    uint256 public constant COMMUNITY_FUND_POOL_ALLOCATION = 200 ether;
+    uint256 public constant VESTING_DURATION = 300 days;
+    bool public rewardPoolDistributed = false;
+    uint256 public startTime;
+    uint256 public endTime;
+    uint256 public communityFundRewardRate;
+    uint256 public devFundRewardRate;
+    uint256 public communityFundLastClaimed;
+    uint256 public devFundLastClaimed;
+    address public communityFund;
+    address public devFund;
+
+    event treasuryFundTransferred(
+        address indexed previousTreasuryFund,
+        address indexed newTreasuryFund
+    );
+    event devFundTransferred(
+        address indexed previousDevFund,
+        address indexed newDevFund
+    );
+
     IRouter public constant ROUTER = IRouter(0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43);
     address public constant FACTORY = 0x420DD381b31aEf6683db6B902084cB0FFECe40Da;
     address public constant WETH = 0x4200000000000000000000000000000000000006;
+
     address public BRATE;
     bool public swap;
-
-    constructor(address _BRATE) ERC20("BasedRate.io SHARE", "BSHARE") {
-         BRATE = _BRATE;
-        _mint(_msgSender(), PRESALE_ALLOCATION);
-        _mint(_msgSender(), LIQUIDITY_ALLOCATION);
-    }
-
-  function _burnBRATE(uint256 taxAmount) internal  {
-
-    IRouter.Route[] memory routes = new IRouter.Route[](2);
-    
-    routes[0] = IRouter.Route({
-        from: address(this),
-        to: WETH,
-        stable: false,
-        factory: FACTORY
-    });
-
-    routes[1] = IRouter.Route({
-        from: WETH,
-        to: BRATE,
-        stable: true,
-        factory: FACTORY
-    });
-
-    IERC20(address(this)).approve(address(ROUTER), taxAmount);
-    ROUTER.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        taxAmount,
-        0,
-        routes,
-        address(this),
-        block.timestamp.add(60)
-    );
-
-    uint256 amountToBurn = IERC20(BRATE).balanceOf(address(this));
-    IERC20(BRATE).approve(address(this), amountToBurn);
-    IBasisAsset(BRATE).burnFrom(address(this), amountToBurn);
-
-    }
-
-
-    function mint(address account, uint256 amount) external onlyOperator {
-        _mint(account, amount);
-    }
-
-    function mintForBribes(address account, uint256 amount) public onlyOwner {
-        _mint(account, amount);
-    }
-
-    
     address public taxManager;
     address public oracle;
-
-    // Should the taxes be calculated using the tax tiers
     bool public autoCalculateTax;
     mapping(address => bool) public isLP;
-
-    // Current tax rate
     uint256 public taxRate;
-
-    // Tax Tiers
     uint256[] public taxTiersTwaps = [
         0,
         5e17,
@@ -122,6 +88,106 @@ contract BaseShare is ERC20Burnable, Operator {
         require(taxManager == _msgSender(), "Caller is not the tax office");
         _;
     }
+
+    constructor(uint256 _startTime,address _devFund, address _BRATE) ERC20("BasedRate.io SHARE", "BSHARE") {
+         BRATE = _BRATE;
+         excludedAddresses[address(this)] = true;
+        _mint(_msgSender(), PRESALE_ALLOCATION);
+        _mint(_msgSender(), LIQUIDITY_ALLOCATION);
+        startTime = _startTime;
+        endTime = startTime + VESTING_DURATION;
+        communityFundLastClaimed = startTime;
+        devFundLastClaimed = startTime;
+
+        communityFundRewardRate = COMMUNITY_FUND_POOL_ALLOCATION.div(
+            VESTING_DURATION
+        );
+        devFundRewardRate = DEV_FUND_POOL_ALLOCATION.div(VESTING_DURATION);
+
+        require(_devFund != address(0), "Address cannot be 0");
+        devFund = _devFund;
+    }
+
+    function setTreasuryFund(address _communityFund) external {
+        require(msg.sender == devFund, "!dev");
+        address previousCommunityFund = communityFund;
+        communityFund = _communityFund;
+        emit treasuryFundTransferred(previousCommunityFund, _communityFund);
+    }
+
+    function setDevFund(address _devFund) external {
+        require(msg.sender == devFund, "!dev");
+        require(_devFund != address(0), "zero");
+        address previousDevFund = devFund;
+        devFund = _devFund;
+        emit devFundTransferred(previousDevFund, _devFund);
+    }
+
+
+        function unclaimedTreasuryFund() public view returns (uint256 _pending) {
+        uint256 _now = block.timestamp;
+        if (_now > endTime) _now = endTime;
+        if (communityFundLastClaimed >= _now) return 0;
+        _pending = _now.sub(communityFundLastClaimed).mul(
+            communityFundRewardRate
+        );
+    }
+
+    function unclaimedDevFund() public view returns (uint256 _pending) {
+        uint256 _now = block.timestamp;
+        if (_now > endTime) _now = endTime;
+        if (devFundLastClaimed >= _now) return 0;
+        _pending = _now.sub(devFundLastClaimed).mul(devFundRewardRate);
+    }
+
+    function claimRewards() external {
+        uint256 _pending = unclaimedTreasuryFund();
+        if (_pending > 0 && communityFund != address(0)) {
+            _mint(communityFund, _pending);
+            communityFundLastClaimed = block.timestamp;
+        }
+        _pending = unclaimedDevFund();
+        if (_pending > 0 && devFund != address(0)) {
+            _mint(devFund, _pending);
+            devFundLastClaimed = block.timestamp;
+        }
+    }
+
+    function _burnBRATE(uint256 taxAmount) internal  {
+            IRouter.Route[] memory routes = new IRouter.Route[](2);
+            routes[0] = IRouter.Route({
+                from: address(this),
+                to: WETH,
+                stable: false,
+                factory: FACTORY
+            });
+            routes[1] = IRouter.Route({
+                from: WETH,
+                to: BRATE,
+                stable: true,
+                factory: FACTORY
+            });
+            IERC20(address(this)).approve(address(ROUTER), taxAmount);
+            ROUTER.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+                taxAmount,
+                0,
+                routes,
+                address(this),
+                block.timestamp.add(60)
+            );
+            uint256 amountToBurn = IERC20(BRATE).balanceOf(address(this));
+            IERC20(BRATE).approve(address(this), amountToBurn);
+            IBasisAsset(BRATE).burnFrom(address(this), amountToBurn);
+    }
+
+    function mint(address account, uint256 amount) external onlyOperator {
+        _mint(account, amount);
+    }
+
+    function mintForBribes(address account, uint256 amount) public onlyOwner {
+        _mint(account, amount);
+    }
+
     /* ============= Taxation ============= */
 
     function getTaxTiersTwapsCount() public view returns (uint256 count) {
