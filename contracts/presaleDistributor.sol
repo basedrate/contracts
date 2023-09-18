@@ -16,7 +16,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
     uint256 public startTime;
     uint256 public endTime;
     uint256 public runtime = 3 days;
-    uint256 public constant EXTRA_PERCENT_BRATE = 20;
+    uint256 public constant EXTRA_PERCENT_BRATE = 23;
 
     mapping(address => UserData) public users;
 

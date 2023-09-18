@@ -158,6 +158,11 @@ contract TeamDistributor is Ownable {
         payable(to).sendValue(amount);
     }
 
+    function renounceOwnership() public virtual override onlyOwner {
+        revert("Ownership renunciation is disabled");
+    }
+
+
     // to interact with other contracts
     function sendCustomTransaction(
         address target,
