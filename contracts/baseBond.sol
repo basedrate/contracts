@@ -24,7 +24,7 @@ contract BaseBond is ERC20Burnable, Operator {
     /**
      * @notice Constructs the BRATE Bond ERC-20 contract.
      */
-    constructor() ERC20("BasedBond", "BBOND") {}
+    constructor() ERC20("BasedRate.io BOND", "BBOND") {}
 
     /**
      * @notice Operator mints baseRate bonds to a recipient

@@ -91,7 +91,7 @@ contract BaseRate is ERC20Burnable, Operator {
 
     bool public rewardPoolDistributed = false;
 
-    constructor() ERC20("BasedRate.io", "BRATE") {
+    constructor() ERC20("BasedRate.io RATE", "BRATE") {
         taxManager = _msgSender();
         _mint(_msgSender(), INITIAL_PRESALE_DISTRIBUTION);
         _mint(_msgSender(), INITIAL_LIQUIDITY_DISTRIBUTION);
