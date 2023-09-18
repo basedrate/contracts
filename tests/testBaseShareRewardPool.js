@@ -60,8 +60,6 @@ let AerodromeVoterContract = new ethers.Contract(
   provider
 );
 
-const startTime = Math.floor(Date.now() / 1000);
-
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
   [deployer, oldDevWallet] = await ethers.getSigners();
@@ -100,17 +98,32 @@ const deployContracts = async () => {
     "BaseShareRewardPool",
     deployer
   );
+  const now = (await provider.getBlock()).timestamp;
   baseShareRewardPool = await BaseShareRewardPool.deploy(
     baseShare.address,
     communityFund.address,
     teamDistributor.address,
     1000,
     1000,
-    utils.parseEther("0.00009384384"),
-    startTime
+    utils.parseEther("0.00011574074"),
+    now
   );
   await baseShareRewardPool.deployed();
   console.log(`BaseShareRewardPool deployed to ${baseShareRewardPool.address}`);
+};
+
+const addPool = async () => {
+  console.log("\n*** ADDING POOL ***");
+  const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
+    AERO,
+    USDbC,
+    false,
+    AerodromeFactory
+  );
+  const AERO_USDbCGauge = await AerodromeVoterContract.gauges(AERO_USDbC_LP);
+  const now = (await provider.getBlock()).timestamp;
+  tx = await baseShareRewardPool.add(1000, AERO_USDbC_LP, true, now, 200, 200);
+  receipt = await tx.wait();
 };
 
 const stakeInSharePool = async () => {
@@ -463,6 +476,8 @@ const showStats = async (signer, AERO_USDbCGaugeContract) => {
 const main = async () => {
   await setAddresses();
   await deployContracts();
+  await addPool();
+  return;
   await buyAERO_USDbC(1, deployer);
   await AddLiquidityAERO_USDbC(deployer);
   await showStats(deployer);

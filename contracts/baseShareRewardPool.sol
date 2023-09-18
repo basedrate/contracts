@@ -257,13 +257,13 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 pool.lastRewardTime,
                 block.timestamp
             );
-            uint256 lpPercent = 10000 - devPercent - feePercent;
+            uint256 lpPercent = 1000 - devPercent - feePercent;
             uint256 _generatedReward = multiplier.mul(sharesPerSecond);
             uint256 _baseShareReward = _generatedReward
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint)
                 .mul(lpPercent)
-                .div(10000);
+                .div(1000);
             accTokensPerShare = accTokensPerShare.add(
                 _baseShareReward.mul(1e18).div(tokenSupply)
             );
@@ -304,22 +304,22 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             uint256 _baseShareReward = _generatedReward
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint);
-            uint256 lpPercent = 10000 - devPercent - feePercent;
+            uint256 lpPercent = 1000 - devPercent - feePercent;
             baseShare.mint(
                 devAddress,
-                _baseShareReward.mul(devPercent).div(10000)
+                _baseShareReward.mul(devPercent).div(1000)
             );
             baseShare.mint(
                 feeAddress,
-                _baseShareReward.mul(feePercent).div(10000)
+                _baseShareReward.mul(feePercent).div(1000)
             );
             baseShare.mint(
                 address(this),
-                _baseShareReward.mul(lpPercent).div(10000)
+                _baseShareReward.mul(lpPercent).div(1000)
             );
             pool.accTokensPerShare = pool.accTokensPerShare.add(
                 _baseShareReward.mul(1e18).div(tokenSupply).mul(lpPercent).div(
-                    10000
+                    1000
                 )
             );
         }

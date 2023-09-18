@@ -13,9 +13,9 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IBasisAsset {
     function burn(uint256 amount) external;
+
     function burnFrom(address from, uint256 amount) external;
 }
-
 
 contract BaseShare is ERC20Burnable, Operator {
     using SafeMath8 for uint8;
@@ -24,61 +24,59 @@ contract BaseShare is ERC20Burnable, Operator {
 
     uint256 public constant PRESALE_ALLOCATION = 27.5 ether;
     uint256 public constant LIQUIDITY_ALLOCATION = 21 ether; // plus one
-    IRouter public constant ROUTER = IRouter(0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43);
-    address public constant FACTORY = 0x420DD381b31aEf6683db6B902084cB0FFECe40Da;
+    IRouter public constant ROUTER =
+        IRouter(0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43);
+    address public constant FACTORY =
+        0x420DD381b31aEf6683db6B902084cB0FFECe40Da;
     address public constant WETH = 0x4200000000000000000000000000000000000006;
     address public BRATE;
     bool public swap;
 
     constructor(address _BRATE) ERC20("BasedRate.io SHARE", "BSHARE") {
-         BRATE = _BRATE;
+        BRATE = _BRATE;
         _mint(_msgSender(), PRESALE_ALLOCATION);
         _mint(_msgSender(), LIQUIDITY_ALLOCATION);
         taxManager = _msgSender();
     }
 
-  function setTaxManager(address _taxManager) public onlyTaxManager {
-    taxManager = _taxManager;
-
-  }
-
-  function _burnBRATE(uint256 taxAmount) internal  {
-
-    IRouter.Route[] memory routes = new IRouter.Route[](2);
-    
-    routes[0] = IRouter.Route({
-        from: address(this),
-        to: WETH,
-        stable: false,
-        factory: FACTORY
-    });
-
-    routes[1] = IRouter.Route({
-        from: WETH,
-        to: BRATE,
-        stable: true,
-        factory: FACTORY
-    });
-
-    IERC20(address(this)).approve(address(ROUTER), taxAmount);
-    ROUTER.swapExactTokensForTokensSupportingFeeOnTransferTokens(
-        taxAmount,
-        0,
-        routes,
-        address(this),
-        block.timestamp.add(60)
-    );
-
-    uint256 amountToBurn = IERC20(BRATE).balanceOf(address(this));
-    IBasisAsset(BRATE).burn(amountToBurn);
+    function setTaxManager(address _taxManager) public onlyTaxManager {
+        taxManager = _taxManager;
     }
 
+    function _burnBRATE(uint256 taxAmount) internal {
+        IRouter.Route[] memory routes = new IRouter.Route[](2);
+
+        routes[0] = IRouter.Route({
+            from: address(this),
+            to: WETH,
+            stable: false,
+            factory: FACTORY
+        });
+
+        routes[1] = IRouter.Route({
+            from: WETH,
+            to: BRATE,
+            stable: true,
+            factory: FACTORY
+        });
+
+        IERC20(address(this)).approve(address(ROUTER), taxAmount);
+        ROUTER.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            taxAmount,
+            0,
+            routes,
+            address(this),
+            block.timestamp.add(60)
+        );
+
+        uint256 amountToBurn = IERC20(BRATE).balanceOf(address(this));
+        IBasisAsset(BRATE).burn(amountToBurn);
+    }
 
     function mint(address account, uint256 amount) external onlyOperator {
         _mint(account, amount);
     }
 
-    
     address public taxManager;
     address public oracle;
 
@@ -122,6 +120,7 @@ contract BaseShare is ERC20Burnable, Operator {
         require(taxManager == _msgSender(), "Caller is not the tax office");
         _;
     }
+
     /* ============= Taxation ============= */
 
     function getTaxTiersTwapsCount() public view returns (uint256 count) {
@@ -271,12 +270,11 @@ contract BaseShare is ERC20Burnable, Operator {
     ) internal {
         uint256 taxAmount = amount.mul(taxRate).div(10000);
         uint256 amountAfterTax = amount.sub(taxAmount);
-        if(!swap) {
-         _burn(sender, taxAmount);    
-        }
-        if(swap) {
-         _transfer(sender,address(this), taxAmount);   
-         _burnBRATE(taxAmount);
+        if (swap) {
+            _transfer(sender, address(this), taxAmount);
+            _burnBRATE(taxAmount);
+        } else {
+            _burn(sender, taxAmount);
         }
         _transfer(sender, recipient, amountAfterTax);
     }
@@ -305,5 +303,4 @@ contract BaseShare is ERC20Burnable, Operator {
             _transfer(sender, recipient, amount);
         }
     }
-
 }
