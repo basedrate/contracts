@@ -457,7 +457,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
     }
 
     function emergencyWithdrawGauge(uint256 _pid) public onlyOperator() {
-            // this will remove the Gauge from the pool permanetly
+            // this will remove the Gauge from the pool permanently
             PoolInfo storage pool = poolInfo[_pid];
             bool isGauge = address(pool.gauge) != address(0);
             require(isGauge, "no gauge to withdraw from");
