@@ -395,7 +395,7 @@ const setOperators = async () => {
   receipt = await tx.wait();
   tx = await baseBond.transferOperator(treasury.address);
   receipt = await tx.wait();
-  tx = await baseShare.transferOperator(baseShareRewardPool.address);
+  tx = await baseShare.setOperator(baseShareRewardPool.address);
   receipt = await tx.wait();
   tx = await boardroom.setOperator(treasury.address);
   receipt = await tx.wait();
@@ -1080,7 +1080,7 @@ const buyBonds = async (signer) => {
     .connect(signer)
     .approve(treasury.address, ethers.constants.MaxUint256);
   receipt = await tx.wait();
-  tx = await treasury.connect(signer).buyBonds(utils.parseEther("1"), Price);
+  tx = await treasury.connect(signer).buyBonds(utils.parseEther("0.1"), Price);
   receipt = await tx.wait();
 
   console.log(
@@ -1140,27 +1140,24 @@ const testBonds = async (caller) => {
   const numOfIterationsSell = 48;
 
   for (let i = 0; i < numOfIterationsSell; i++) {
-    await time.increase(1800);
+    await time.increase(21600);
     await sellBRATE(0.3,caller);
-    await viewOracle();
-  }
-  const numOfIterationsAll = (numOfIterationsSell * 1800) / 21600;
-  for (let i = 0; i < numOfIterationsAll; i++) {
     await allocateSeigniorage();
+    await viewOracle();
   }
 
   await buyBonds(deployer);
 
-  const numOfIterationsSell_ = 60;
+  const numOfIterationsSell_ = 48;
 
   for (let i = 0; i < numOfIterationsSell_; i++) {
-    await time.increase(1800);
-    await buyBRATE(0.6,caller);
+    await time.increase(21600);
+    await buyBRATE(0.45,caller);
+    await allocateSeigniorage();
     await viewOracle();
   }
   const numOfIterationsAll_ = (numOfIterationsSell * 1800) / 21600;
   for (let i = 0; i < numOfIterationsAll_; i++) {
-    await allocateSeigniorage();
   }
   await redeemBonds(deployer);
 };
@@ -1268,29 +1265,33 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
+
+  await setRewardPool();
+  await stakeBSHAREINBoardroom();
+  await testBonds(deployer);
   // await disableTax();
 
-  await sellBRATE(0.1, deployer);
-  await sellBRATE(0.1, deployer);
-  await sellBRATE(0.1, deployer);
-  await sellBRATE(0.1, deployer);
+  // await sellBRATE(0.1, deployer);
+  // await sellBRATE(0.1, deployer);
+  // await sellBRATE(0.1, deployer);
+  // await sellBRATE(0.1, deployer);
 
-  await sellBSHARE(0.1, deployer);
-  await sellBSHARE(0.1, deployer);
-  await sellBSHARE(0.1, deployer);
+  // await sellBSHARE(0.1, deployer);
+  // await sellBSHARE(0.1, deployer);
+  // await sellBSHARE(0.1, deployer);
 
-  await getBalance();
-  await getTotalSupply();
-  await sellBSHARE(10, deployer);
-  await getTotalSupply();
-  await getBalance();
+  // await getBalance();
+  // await getTotalSupply();
+  // await sellBSHARE(10, deployer);
+  // await getTotalSupply();
+  // await getBalance();
 
 
 
 
   
 
-  await setRewardPool();
+
 
 
   // console.log(
@@ -1299,9 +1300,7 @@ const main = async () => {
 
   // await sendBRATEAndBSHAREToPresaleDistributor();
 
-  await stakeBSHAREINBoardroom();
 
-    // await testBonds(deployer);
 
 
   // test logic

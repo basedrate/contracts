@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./aerodrome/interfaces/IRouter.sol";
-import "./libraries/Operator.sol";
+import "./libraries/IsOperator.sol";
 import "./interfaces/IOracle.sol";
 import "./libraries/SafeMath8.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -77,10 +77,6 @@ contract BaseShare is ERC20Burnable, Operator {
     function mint(address account, uint256 amount) external onlyOperator {
         _mint(account, amount);
     }
-
-    // function mintForBribes(address account, uint256 amount) public onlyOwner {
-    //     _mint(account, amount);
-    // }
 
     
     address public taxManager;
