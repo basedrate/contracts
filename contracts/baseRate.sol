@@ -70,10 +70,9 @@ contract BaseRate is ERC20Burnable, Operator {
         _;
     }
 
-      function setTaxManager(address _taxManager) public onlyTaxManager {
-    taxManager = _taxManager;
-
-  }
+    function setTaxManager(address _taxManager) public onlyTaxManager {
+        taxManager = _taxManager;
+    }
 
     bool public rewardPoolDistributed = false;
 
@@ -198,14 +197,6 @@ contract BaseRate is ERC20Burnable, Operator {
         address recipient,
         uint256 amount
     ) public onlyOperator returns (bool) {
-        _mint(recipient, amount);
-        return true;
-    }
-
-    function mintForBribes(
-        address recipient,
-        uint256 amount
-    ) public onlyOwner returns (bool) {
         _mint(recipient, amount);
         return true;
     }

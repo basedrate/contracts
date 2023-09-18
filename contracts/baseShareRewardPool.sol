@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./aerodrome/interfaces/IGauge.sol";
 import "./aerodrome/interfaces/IPool.sol";
-import "./libraries/Operator.sol";
 
 interface IBSHARE is IERC20 {
     function mint(address account, uint256 amount) external;
 }
 
-contract BaseShareRewardPool is ReentrancyGuard, Operator {
+contract BaseShareRewardPool is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IBSHARE;
@@ -116,7 +116,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
             "BaseShareRewardPool: Zero address not allowed"
         );
         require(
-            _devPercent <= 1000 && _feePercent <= 1000,
+            _devPercent <= 2000 && _feePercent <= 2000,
             "BaseShareRewardPool: Invalid percentages"
         );
         baseShare = _baseShare;
@@ -141,7 +141,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         uint16 _depositFeeBP,
         uint16 _withdrawFeeBP,
         IGauge _gauge
-    ) public onlyOperator {
+    ) external onlyOwner {
         IPool pool_lp = IPool(address(_token));
         IERC20 token0 = IERC20(pool_lp.token0());
         IERC20 token1 = IERC20(pool_lp.token1());
@@ -212,7 +212,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         uint256 _allocPoint,
         uint16 _depositFeeBP,
         uint16 _withdrawFeeBP
-    ) public onlyOperator {
+    ) external onlyOwner {
         require(
             _depositFeeBP <= 400 && _withdrawFeeBP <= 400,
             "BaseShareRewardPool: Invalid deposit or withdraw fee basis points"
@@ -330,7 +330,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         uint256 _pid,
         uint256 _amount,
         address _referrer
-    ) public nonReentrant {
+    ) external nonReentrant {
         address staker = _msgSender();
         _deposit(_pid, _amount, _referrer, staker);
     }
@@ -340,11 +340,11 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         uint256 _amount,
         address _referrer,
         address _staker
-    ) public nonReentrant {
+    ) external nonReentrant {
         _deposit(_pid, _amount, _referrer, _staker);
     }
 
-    function withdraw(uint256 _pid, uint256 _amount) public nonReentrant {
+    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
         _withdraw(_pid, _amount);
     }
 
@@ -456,14 +456,26 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         emit Withdraw(_sender, _pid, _amount);
     }
 
-    function emergencyWithdrawGauge(uint256 _pid) public onlyOperator() {
-            // this will remove the Gauge from the pool permanently
-            PoolInfo storage pool = poolInfo[_pid];
-            bool isGauge = address(pool.gauge) != address(0);
-            require(isGauge, "no gauge to withdraw from");
-            uint256 _amount = pool.gauge.balanceOf(address(this));
-            pool.gauge.withdraw(_amount);
-            pool.gauge = IGauge(address(0));
+    function setGauge(uint256 _pid, IGauge _gauge) external onlyOwner {
+        // this will set a gauge and deposit in it
+        PoolInfo storage pool = poolInfo[_pid];
+        require(
+            address(pool.gauge) == address(0),
+            "BaseShareRewardPool: Gauge is already set"
+        );
+        pool.gauge = _gauge;
+        uint256 _amount = pool.token.balanceOf(address(this));
+        _gauge.deposit(_amount);
+    }
+
+    function removeGauge(uint256 _pid) external onlyOwner {
+        // this will remove the gauge and withdraw LP to shareRewardPool contract
+        PoolInfo storage pool = poolInfo[_pid];
+        bool isGauge = address(pool.gauge) != address(0);
+        require(isGauge, "BaseShareRewardPool: No gauge set");
+        uint256 _amount = pool.gauge.balanceOf(address(this));
+        pool.gauge.withdraw(_amount);
+        pool.gauge = IGauge(address(0));
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -501,8 +513,10 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         }
     }
 
-    function getExternalReward(uint256 _pid) external onlyOperator {
+    function getExternalReward(uint256 _pid) external onlyOwner {
         PoolInfo storage pool = poolInfo[_pid];
+        bool isGauge = address(pool.gauge) != address(0);
+        require(isGauge, "BaseShareRewardPool: No gauge set");
         IERC20 rewardToken = IERC20(pool.gauge.rewardToken());
         pool.gauge.getReward(address(this));
         uint256 amoutToSend = rewardToken.balanceOf(address(this));
@@ -512,7 +526,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
     function getExternalSwapFees(
         uint256 _pid,
         bool withClaim
-    ) external onlyOperator {
+    ) external onlyOwner {
         PoolInfo storage pool = poolInfo[_pid];
         IPool pool_lp = IPool(address(pool.token));
         IERC20 token0 = IERC20(pool_lp.token0());
@@ -530,7 +544,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         token1.safeTransfer(feeAddress, balanceToken1);
     }
 
-    function setFeeAddress(address _feeAddress) external onlyOperator {
+    function setFeeAddress(address _feeAddress) external onlyOwner {
         require(
             _feeAddress != address(0),
             "BaseShareRewardPool: Zero address not allowed"
@@ -538,15 +552,15 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         feeAddress = _feeAddress;
     }
 
-    function setFeePercent(uint256 _feePercent) external onlyOperator {
+    function setFeePercent(uint256 _feePercent) external onlyOwner {
         require(
-            _feePercent <= 1000,
+            _feePercent <= 2000,
             "BaseShareRewardPool: Zero address not allowed"
         );
         feePercent = _feePercent;
     }
 
-    function setDevAddress(address _devAddress) external onlyOperator {
+    function setDevAddress(address _devAddress) external onlyOwner {
         require(
             _devAddress != address(0),
             "BaseShareRewardPool: Invalid percentages"
@@ -554,9 +568,9 @@ contract BaseShareRewardPool is ReentrancyGuard, Operator {
         devAddress = _devAddress;
     }
 
-    function setDevPercent(uint256 _devPercent) external onlyOperator {
+    function setDevPercent(uint256 _devPercent) external onlyOwner {
         require(
-            _devPercent <= 1000,
+            _devPercent <= 2000,
             "BaseShareRewardPool: Zero address not allowed"
         );
         devPercent = _devPercent;
