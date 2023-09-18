@@ -94,10 +94,23 @@ const setAddresses = async () => {
   oldDevWallet = await ethers.getImpersonatedSigner(
     "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
   );
+    buyer1 = await ethers.getImpersonatedSigner(
+      "0xf6e9b43969f52021bC920c635df3933bC01aB52c"
+    );
+    buyer2 = await ethers.getImpersonatedSigner(
+      "0x53d6A63aB7E69b71a63bA418B8aa749945fba02F"
+    );
+    buyer3 = await ethers.getImpersonatedSigner(
+      "0xdEA5a01D11594823FA0C71F200364e2bc124992f"
+    );
+
   console.log(`Deployer: ${deployer.address}`);
   console.log(`oldDevWallet: ${oldDevWallet.address}`);
   await setBalance(deployer.address, utils.parseEther("1000000000"));
   await setBalance(oldDevWallet.address, utils.parseEther("1000000000"));
+  await setBalance(buyer1.address, utils.parseEther("1000000000"));
+  await setBalance(buyer2.address, utils.parseEther("1000000000"));
+  await setBalance(buyer3.address, utils.parseEther("1000000000"));
 };
 
 const deployContracts = async () => {
@@ -890,6 +903,78 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   receipt = await tx.wait();
 };
 
+
+
+
+const claimPresaleDistributor = async (signer, buyer) => {
+  try {
+  console.log("\n*** CLAIMING PRATE AND PSHARE FROM PRESALE DISTRIBUTOR ***");
+  const valueUser = await presaleDistributor.users(signer.address);
+  console.log("user presale values",buyer," ", valueUser);
+
+  console.log(
+    "BRATE Balance signer:", buyer,
+    utils.formatEther(await baseRate.balanceOf(signer.address))
+  );
+  console.log(
+    "BSHARE Balance signer:", buyer,
+    utils.formatEther(await baseShare.balanceOf(signer.address))
+  );
+
+  tx = await presaleDistributor.connect(signer).Claim();
+  await tx.wait();
+
+  receipt = await tx.wait();
+
+  console.log(
+    "BRATE Balance presaleDistributor:",
+    utils.formatEther(await baseRate.balanceOf(presaleDistributor.address))
+  );
+  console.log(
+    "BSHARE Balance presaleDistributor:",
+    utils.formatEther(await baseShare.balanceOf(presaleDistributor.address))
+  );
+
+  console.log(
+    "BRATE Balance signer:", buyer,
+    utils.formatEther(await baseRate.balanceOf(signer.address))
+  );
+  console.log(
+    "BSHARE Balance signer:", buyer,
+    utils.formatEther(await baseShare.balanceOf(signer.address))
+  );
+
+  // const values = await presaleDistributor.getTotalValues();
+  // console.log("summed presale values", values);
+  receipt = await tx.wait();
+
+  } catch (error) {
+    console.error("Error in claim :", error);
+  }
+  };
+
+  const claimTest = async (Iterations) => {
+    try {
+    
+
+      const numOfIterationsClaim = Iterations;
+
+      for (let i = 0; i < numOfIterationsClaim; i++) {
+        await time.increase(21600);
+        await claimPresaleDistributor(buyer1,"buyer 1");
+        await claimPresaleDistributor(buyer2,"buyer 2");
+        await claimPresaleDistributor(buyer3,"buyer 3");
+      }
+    
+  
+    } catch (error) {
+      console.error("Error in claim :", error);
+    }
+    };
+
+
+
+
 const buyBSHARE = async (amount, caller) => {
   console.log("\n*** BUYING BSHARE ***");
   console.log("Tax ", await baseShare.taxRate());
@@ -1162,6 +1247,33 @@ const testBonds = async (caller) => {
   await redeemBonds(deployer);
 };
 
+
+
+const testAllocate = async (caller) => {
+  console.log("\n*** TESTING BONDS***");
+
+  // const numOfIterationsSell = 2;
+
+  // for (let i = 0; i < numOfIterationsSell; i++) {
+  //   await time.increase(21600);
+  //   await sellBRATE(0.3,caller);
+  //   await allocateSeigniorage();
+  //   await viewOracle();
+  // }
+
+  const numOfIterationsSell_ = 20;
+
+  for (let i = 0; i < numOfIterationsSell_; i++) {
+    await time.increase(21600);
+    await buyBRATE(1,caller);
+    await allocateSeigniorage();
+    await viewOracle();
+  }
+  const numOfIterationsAll_ = (numOfIterationsSell * 1800) / 21600;
+  for (let i = 0; i < numOfIterationsAll_; i++) {
+  }
+};
+
 const setTeamAddresses = async () => {
   console.log("\n*** SETTING TEAM ADDRESSES ***");
   await teamDistributor.setCaller(deployer.address);
@@ -1257,7 +1369,7 @@ const main = async () => {
   // );
 
   await setAddresses();
-  // await withdrawFromPresale();
+  await withdrawFromPresale();
   await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
@@ -1268,7 +1380,36 @@ const main = async () => {
 
   await setRewardPool();
   await stakeBSHAREINBoardroom();
-  await testBonds(deployer);
+  await sendBRATEAndBSHAREToPresaleDistributor();
+
+  await time.increase(6 * 3600);
+
+  await claimTest(13);
+
+
+
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  //  await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  // await testBonds(deployer);
+  // await testAllocate(deployer);
   // await disableTax();
 
   // await sellBRATE(0.1, deployer);
@@ -1298,7 +1439,7 @@ const main = async () => {
   //   await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
   // );
 
-  // await sendBRATEAndBSHAREToPresaleDistributor();
+
 
 
 

@@ -101,14 +101,14 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
 
     function rewardsPerSecondRate(address _user) public view returns (uint256) {
         uint256 totalBrate = users[_user].brateBought;
-        return totalBrate / runtime;
+        return (totalBrate * 1e18) / runtime;
     }
 
     function rewardsPerSecondShare(
         address _user
     ) public view returns (uint256) {
         uint256 totalBshare = users[_user].bshareBought;
-        return totalBshare / runtime;
+        return (totalBshare * 1e18) / runtime;
     }
 
     function pendingShare(address _user) public view returns (uint256) {
@@ -116,7 +116,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         uint256 rewardsPerSecond = rewardsPerSecondShare(_user);
         if (block.timestamp > lastRewardTime) {
             uint256 multiplier = getMultiplier(lastRewardTime, block.timestamp);
-            uint256 tokenReward = multiplier * rewardsPerSecond;
+            uint256 tokenReward = (multiplier * rewardsPerSecond) / 1e18;
             return tokenReward;
         } else {
             return 0;
@@ -128,7 +128,7 @@ contract presaleDistributor is Ownable, ReentrancyGuard {
         uint256 rewardsPerSecond = rewardsPerSecondRate(_user);
         if (block.timestamp > lastRewardTime) {
             uint256 multiplier = getMultiplier(lastRewardTime, block.timestamp);
-            uint256 tokenReward = multiplier * rewardsPerSecond;
+            uint256 tokenReward = (multiplier * rewardsPerSecond) / 1e18;
             return tokenReward;
         } else {
             return 0;
