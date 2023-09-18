@@ -1,4 +1,19 @@
 // SPDX-License-Identifier: MIT
+//
+// BasedRate
+// website.: www.basedrate.io
+// telegram.: https://t.me/BasedRate
+//               _
+//              (_)
+//               |
+//          ()---|---()
+//               |
+//               |
+//        __     |     __
+//       |\     /^\     /|
+//         '..-'   '-..'
+//           `-._ _.-`
+//               `
 
 pragma solidity 0.8.19;
 
