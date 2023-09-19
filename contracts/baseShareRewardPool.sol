@@ -11,8 +11,9 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./aerodrome/interfaces/IGauge.sol";
 import "./aerodrome/interfaces/IPool.sol";
+import "./aerodrome/interfaces/IVoter.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 interface IBSHARE is IERC20 {
     function mint(address account, uint256 amount) external;
@@ -66,7 +67,8 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
     }
 
     IBSHARE public baseShare;
-    // bool public started;
+    IVoter public constant aeroVoter =
+        IVoter(0x16613524e02ad97eDfeF371bC883F2F5d6C480A5);
 
     // Info of each pool.
     PoolInfo[] public poolInfo;
@@ -156,6 +158,10 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             "BaseShareRewardPool: LP token must be a valid contract"
         );
         if (address(_gauge) != address(0)) {
+            require(
+                aeroVoter.isGauge(address(_gauge)),
+                "BaseShareRewardPool: Gauge is not valid"
+            );
             IERC20 stakingToken = IERC20(_gauge.stakingToken());
             require(
                 _token == stakingToken,
@@ -308,18 +314,6 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint);
             uint256 lpPercent = 10000 - devPercent - feePercent;
-            console.log(
-                "SHARE Balance Before dev:",
-                baseShare.balanceOf(devAddress)
-            );
-            console.log(
-                "SHARE Balance Before community:",
-                baseShare.balanceOf(feeAddress)
-            );
-            console.log(
-                "SHARE Balance Before rewardPool:",
-                baseShare.balanceOf(address(this))
-            );
             baseShare.mint(
                 devAddress,
                 _baseShareReward.mul(devPercent).div(10000)
@@ -332,18 +326,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 address(this),
                 _baseShareReward.mul(lpPercent).div(10000)
             );
-            console.log(
-                "SHARE Balance After dev:",
-                baseShare.balanceOf(devAddress)
-            );
-            console.log(
-                "SHARE Balance After community:",
-                baseShare.balanceOf(feeAddress)
-            );
-            console.log(
-                "SHARE Balance After rewardPool:",
-                baseShare.balanceOf(address(this))
-            );
+
             pool.accTokensPerShare = pool.accTokensPerShare.add(
                 _baseShareReward.mul(1e18).div(tokenSupply).mul(lpPercent).div(
                     10000
@@ -493,23 +476,14 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             address(pool.gauge) == address(0),
             "BaseShareRewardPool: Gauge is already set"
         );
+        require(
+            aeroVoter.isGauge(address(_gauge)),
+            "BaseShareRewardPool: Gauge is not valid"
+        );
         pool.gauge = _gauge;
         uint256 _amount = pool.token.balanceOf(address(this));
-        console.log("contract balance LP before", _amount);
-        console.log(
-            "gauge balance LP before",
-            pool.gauge.balanceOf(address(this))
-        );
         pool.token.approve(address(pool.gauge), _amount);
         _gauge.deposit(_amount);
-        console.log(
-            "contract balance LP after",
-            pool.token.balanceOf(address(this))
-        );
-        console.log(
-            "gauge balance LP after",
-            pool.gauge.balanceOf(address(this))
-        );
     }
 
     function removeGauge(uint256 _pid) external onlyOwner {
@@ -518,20 +492,8 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         bool isGauge = address(pool.gauge) != address(0);
         require(isGauge, "BaseShareRewardPool: No gauge set");
         uint256 _amount = pool.gauge.balanceOf(address(this));
-        console.log(
-            "contract balance LP before",
-            pool.token.balanceOf(address(this))
-        );
-        console.log(
-            "gauge balance LP before",
-            pool.gauge.balanceOf(address(this))
-        );
         pool.gauge.withdraw(_amount);
         pool.gauge = IGauge(address(0));
-        console.log(
-            "contract balance LP after",
-            pool.token.balanceOf(address(this))
-        );
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -576,10 +538,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         IERC20 rewardToken = IERC20(pool.gauge.rewardToken());
         pool.gauge.getReward(address(this));
         uint256 amountToSend = rewardToken.balanceOf(address(this));
-        console.log("amountToSend", amountToSend);
-        console.log("balanceBefore", rewardToken.balanceOf(feeAddress));
         rewardToken.safeTransfer(feeAddress, amountToSend);
-        console.log("balanceAfter", rewardToken.balanceOf(feeAddress));
     }
 
     function getExternalSwapFees(
@@ -599,14 +558,8 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         }
         uint256 balanceToken0 = token0.balanceOf(address(this));
         uint256 balanceToken1 = token1.balanceOf(address(this));
-        console.log("balanceToken0", balanceToken0);
-        console.log("balanceToken1", balanceToken1);
-        console.log("balanceBefore token0", token0.balanceOf(feeAddress));
-        console.log("balanceBefore token1", token0.balanceOf(feeAddress));
         token0.safeTransfer(feeAddress, balanceToken0);
         token1.safeTransfer(feeAddress, balanceToken1);
-        console.log("balanceAfter token0", token0.balanceOf(feeAddress));
-        console.log("balanceAfter token1", token1.balanceOf(feeAddress));
     }
 
     function setFeeAddress(address _feeAddress) external onlyOwner {
@@ -661,8 +614,6 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             .div(totalAllocPoint)
             .mul(lpPercent)
             .div(10000);
-        console.log("sharesPerSecond", sharesPerSecond);
-        console.log("rewardsPerSecond", rewardsPerSecond);
         return
             PoolView({
                 pid: pid,

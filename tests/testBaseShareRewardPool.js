@@ -1,21 +1,21 @@
-const { ethers } = require("hardhat");
+const { ethers } = require('hardhat');
 const {
   setBalance,
   time,
   mine,
-} = require("@nomicfoundation/hardhat-network-helpers");
-const RouterABI = require("../scripts/RouterABI.json");
-const FactoryABI = require("../scripts/factoryABI.json");
-const ERC20ABI = require("@uniswap/v2-core/build/IERC20.json").abi;
+} = require('@nomicfoundation/hardhat-network-helpers');
+const RouterABI = require('../scripts/RouterABI.json');
+const FactoryABI = require('../scripts/factoryABI.json');
+const ERC20ABI = require('@uniswap/v2-core/build/IERC20.json').abi;
 const PoolABI =
-  require("../artifacts/contracts/aerodrome/Pool.sol/Pool.json").abi;
+  require('../artifacts/contracts/aerodrome/Pool.sol/Pool.json').abi;
 const VoterABI =
-  require("../artifacts/contracts/aerodrome/Voter.sol/Voter.json").abi;
+  require('../artifacts/contracts/aerodrome/Voter.sol/Voter.json').abi;
 const GaugeABI =
-  require("../artifacts/contracts/aerodrome/gauges/Gauge.sol/Gauge.json").abi;
+  require('../artifacts/contracts/aerodrome/gauges/Gauge.sol/Gauge.json').abi;
 const utils = ethers.utils;
 const provider = ethers.provider;
-require("dotenv").config();
+require('dotenv').config();
 
 let tx, receipt; //transactions
 let deployer, oldDevWallet; //wallets
@@ -26,23 +26,23 @@ let baseRate,
   communityFund,
   baseShareRewardPool; //contracts
 
-let AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
-let AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
-let AerodromeVoter = "0x16613524e02ad97edfef371bc883f2f5d6c480a5";
-const WETH = "0x4200000000000000000000000000000000000006";
-const REF = "0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A";
-const WETH_USDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
-const WETH_USDbC_GAUGE = "0xeca7Ff920E7162334634c721133F3183B83B0323";
-const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
-const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
-const AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
-const USDbC = "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA";
+let AerodromeRouter = '0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43';
+let AerodromeFactory = '0x420dd381b31aef6683db6b902084cb0ffece40da';
+let AerodromeVoter = '0x16613524e02ad97edfef371bc883f2f5d6c480a5';
+const WETH = '0x4200000000000000000000000000000000000006';
+const REF = '0x3B12aA296Fa88d6CBA494e900EEFe1B85fDA507A';
+const WETH_USDbC = '0xB4885Bc63399BF5518b994c1d0C153334Ee579D0';
+const WETH_USDbC_GAUGE = '0xeca7Ff920E7162334634c721133F3183B83B0323';
+const AERO_USDbC = '0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75';
+const AERO_USDbC_GAUGE = '0x9a202c932453fB3d04003979B121E80e5A14eE7b';
+const AERO = '0x940181a94A35A4569E4529A3CDfB74e38FD98631';
+const USDbC = '0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA';
 
 const AERO_USDbCContract = new ethers.Contract(AERO_USDbC, PoolABI, provider);
 const WETH_USDbCContract = new ethers.Contract(WETH_USDbC, PoolABI, provider);
 const USDbCContract = new ethers.Contract(USDbC, ERC20ABI, provider);
 const AEROContract = new ethers.Contract(AERO, ERC20ABI, provider);
-const AddressDead = "0x000000000000000000000000000000000000dead";
+const AddressDead = '0x000000000000000000000000000000000000dead';
 
 let AerodromeRouterContract = new ethers.Contract(
   AerodromeRouter,
@@ -62,41 +62,41 @@ let AerodromeVoterContract = new ethers.Contract(
 );
 
 const setAddresses = async () => {
-  console.log("\n*** SETTING ADDRESSES ***");
+  console.log('\n*** SETTING ADDRESSES ***');
   [deployer, oldDevWallet] = await ethers.getSigners();
   console.log(`Deployer: ${deployer.address}`);
   console.log(`oldDevWallet: ${oldDevWallet.address}`);
-  await setBalance(deployer.address, utils.parseEther("1000000000"));
-  await setBalance(oldDevWallet.address, utils.parseEther("1000000000"));
+  await setBalance(deployer.address, utils.parseEther('1000000000'));
+  await setBalance(oldDevWallet.address, utils.parseEther('1000000000'));
 };
 
 const deployContracts = async () => {
-  console.log("\n*** DEPLOYING CONTRACTS ***");
-  const BaseRate = await ethers.getContractFactory("BaseRate", deployer);
+  console.log('\n*** DEPLOYING CONTRACTS ***');
+  const BaseRate = await ethers.getContractFactory('BaseRate', deployer);
   baseRate = await BaseRate.deploy();
   await baseRate.deployed();
   console.log(`BaseRate deployed to ${baseRate.address}`);
-  const BaseShare = await ethers.getContractFactory("BaseShare", deployer);
+  const BaseShare = await ethers.getContractFactory('BaseShare', deployer);
   baseShare = await BaseShare.deploy(baseRate.address);
   await baseShare.deployed();
   console.log(`BaseShare deployed to ${baseShare.address}`);
 
   const CommunityFund = await ethers.getContractFactory(
-    "CommunityFund",
+    'CommunityFund',
     deployer
   );
   communityFund = await CommunityFund.deploy();
   await communityFund.deployed();
   console.log(`CommunityFund deployed to ${communityFund.address}`);
   const TeamDistributor = await ethers.getContractFactory(
-    "TeamDistributor",
+    'TeamDistributor',
     deployer
   );
   teamDistributor = await TeamDistributor.deploy();
   await teamDistributor.deployed();
   console.log(`TeamDistributor deployed to ${teamDistributor.address}`);
   const BaseShareRewardPool = await ethers.getContractFactory(
-    "BaseShareRewardPool",
+    'BaseShareRewardPool',
     deployer
   );
   const now = (await provider.getBlock()).timestamp;
@@ -106,19 +106,19 @@ const deployContracts = async () => {
     teamDistributor.address,
     1000,
     1000,
-    utils.parseEther("0.00011574074"),
+    utils.parseEther('0.00011574074'),
     now + 10
   );
   await baseShareRewardPool.deployed();
   console.log(`BaseShareRewardPool deployed to ${baseShareRewardPool.address}`);
 
-  console.log("\n*** SETTING MASTERCHEF AS BSHARE OPERATOR ***");
+  console.log('\n*** SETTING MASTERCHEF AS BSHARE OPERATOR ***');
   tx = await baseShare.setOperator(baseShareRewardPool.address);
   receipt = await tx.wait();
 };
 
 const addPool = async () => {
-  console.log("\n*** ADDING POOL ***");
+  console.log('\n*** ADDING POOL ***');
   const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
     AERO,
     USDbC,
@@ -140,33 +140,45 @@ const addPool = async () => {
   receipt = await tx.wait();
 };
 
-const stakeInSharePool = async (signer) => {
-  console.log("\n*** STAKING IN SHAREPOOL ***");
+const stakeInSharePool = async (signer, pid) => {
+  console.log('\n*** STAKING IN SHAREPOOL ***');
   let LPbalance = await AERO_USDbCContract.balanceOf(signer.address);
-  console.log("AERO_USDbC LP balance before ", LPbalance);
+  console.log('AERO_USDbC LP balance before ', LPbalance);
   tx = await AERO_USDbCContract.connect(signer).approve(
     baseShareRewardPool.address,
     ethers.constants.MaxUint256
   );
   receipt = await tx.wait();
-  tx = await baseShareRewardPool.deposit(0, LPbalance, REF);
+  tx = await baseShareRewardPool.deposit(pid, LPbalance, REF);
   receipt = await tx.wait();
 
   let LPbalanceAfter = await AERO_USDbCContract.balanceOf(signer.address);
-  console.log("AERO_USDbC LP balance after", LPbalanceAfter);
+  console.log('AERO_USDbC LP balance after', LPbalanceAfter);
+};
+
+const unstakeFromSharePool = async (signer, pid) => {
+  console.log('\n*** UNSTAKING FROM SHAREPOOL ***');
+  let LPbalance = (await baseShareRewardPool.getUserView(pid, signer.address))
+    .lpBalance;
+  console.log('AERO_USDbC LP balance before ', LPbalance);
+  tx = await baseShareRewardPool.withdraw(pid, LPbalance);
+  receipt = await tx.wait();
+
+  let LPbalanceAfter = await AERO_USDbCContract.balanceOf(signer.address);
+  console.log('AERO_USDbC LP balance after', LPbalanceAfter);
 };
 
 const claimSharePool = async (signer) => {
-  console.log("\n*** CLAIMING SHAREPOOL ***");
+  console.log('\n*** CLAIMING SHAREPOOL ***');
   tx = await baseShareRewardPool.connect(signer).deposit(0, 0, REF);
-  // tx = await baseShareRewardPool.withdraw(0,0);
+  // tx = await baseShareRewardPool.withdraw(0, 0);
   receipt = await tx.wait();
 };
 
 const stakeInGauge = async (signer) => {
-  console.log("\n*** STAKING IN GAUGE ***");
+  console.log('\n*** STAKING IN GAUGE ***');
   let LPbalance = await AERO_USDbCContract.balanceOf(signer.address);
-  console.log("AERO_USDbC LP balance before ", LPbalance);
+  console.log('AERO_USDbC LP balance before ', LPbalance);
   const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
     AERO,
     USDbC,
@@ -184,19 +196,19 @@ const stakeInGauge = async (signer) => {
     ethers.constants.MaxUint256
   );
   receipt = await tx.wait();
-  tx = await AERO_USDbCGaugeContract.connect(signer)["deposit(uint256)"](
+  tx = await AERO_USDbCGaugeContract.connect(signer)['deposit(uint256)'](
     LPbalance
   );
   receipt = await tx.wait();
 
   let LPbalanceAfter = await AERO_USDbCContract.balanceOf(signer.address);
-  console.log("AERO_USDbC LP ", LPbalanceAfter);
+  console.log('AERO_USDbC LP ', LPbalanceAfter);
 
   return AERO_USDbCGauge;
 };
 
 const unstakeFromGauge = async (signer) => {
-  console.log("\n*** UNSTAKING FROM GAUGE ***");
+  console.log('\n*** UNSTAKING FROM GAUGE ***');
   const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
     AERO,
     USDbC,
@@ -212,45 +224,45 @@ const unstakeFromGauge = async (signer) => {
   let LPbalanceInGauge = await AERO_USDbCGaugeContract.balanceOf(
     signer.address
   );
-  console.log("AERO_USDbC LP balance in gauge ", LPbalanceInGauge);
+  console.log('AERO_USDbC LP balance in gauge ', LPbalanceInGauge);
 
   tx = await AERO_USDbCGaugeContract.connect(signer).withdraw(LPbalanceInGauge);
   receipt = await tx.wait();
 
   let LPbalanceAfter = await AERO_USDbCContract.balanceOf(signer.address);
-  console.log("AERO_USDbC LP balance after", LPbalanceAfter);
+  console.log('AERO_USDbC LP balance after', LPbalanceAfter);
 };
 
 const unStakeInSharePool = async () => {
-  console.log("\n*** UNSTAKING IN SHAREPOOL ***");
+  console.log('\n*** UNSTAKING IN SHAREPOOL ***');
   let LPbalance = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP balance before ", LPbalance);
+  console.log(' WETH_USDbC LP balance before ', LPbalance);
 
   let lpBalanceForPool = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log("GLOBAL LP Balance for Pool ID 2 before: ", lpBalanceForPool);
+  console.log('GLOBAL LP Balance for Pool ID 2 before: ', lpBalanceForPool);
 
   let userInfoForDeployer = await baseShareRewardPool.userInfo(
     2,
     deployer.address
   );
   let amount = userInfoForDeployer.amount;
-  console.log("user Staked before", amount);
+  console.log('user Staked before', amount);
 
   tx = await baseShareRewardPool.withdraw(2, amount);
   receipt = await tx.wait();
 
   let LPbalanceAfter = await WETH_USDbCContract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP ", LPbalanceAfter);
+  console.log(' WETH_USDbC LP ', LPbalanceAfter);
 
   let userInfoForDeployerAfter = await baseShareRewardPool.userInfo(
     2,
     deployer.address
   );
   let amountAfter = userInfoForDeployerAfter.amount;
-  console.log("user Staked after", amountAfter);
+  console.log('user Staked after', amountAfter);
 
   let lpBalanceForPoolAfter = (await baseShareRewardPool.poolInfo(2)).lpBalance;
-  console.log("GLOBAL LP Balance for Pool ID 2 after: ", lpBalanceForPoolAfter);
+  console.log('GLOBAL LP Balance for Pool ID 2 after: ', lpBalanceForPoolAfter);
 
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
     baseRate.address,
@@ -266,49 +278,49 @@ const unStakeInSharePool = async () => {
   );
 
   let LPbalance1 = await BRATE_ETH_LP_Contract.balanceOf(deployer.address);
-  console.log(" BRATE_ETH LP balance before ", LPbalance1);
+  console.log(' BRATE_ETH LP balance before ', LPbalance1);
 
   let lpBalanceForPool1 = (await baseShareRewardPool.poolInfo(0)).lpBalance;
-  console.log("GLOBAL LP Balance for Pool ID 0 before: ", lpBalanceForPool1);
+  console.log('GLOBAL LP Balance for Pool ID 0 before: ', lpBalanceForPool1);
 
   let userInfoForDeployer1 = await baseShareRewardPool.userInfo(
     0,
     deployer.address
   );
   let amount1 = userInfoForDeployer1.amount;
-  console.log("user Staked before", amount1);
+  console.log('user Staked before', amount1);
 
   tx = await baseShareRewardPool.withdraw(0, amount1);
   receipt = await tx.wait();
 
   let LPbalanceAfter1 = await BRATE_ETH_LP_Contract.balanceOf(deployer.address);
-  console.log(" WETH_USDbC LP ", LPbalanceAfter1);
+  console.log(' WETH_USDbC LP ', LPbalanceAfter1);
 
   let userInfoForDeployerAfter1 = await baseShareRewardPool.userInfo(
     2,
     deployer.address
   );
   let amountAfter1 = userInfoForDeployerAfter1.amount;
-  console.log("user Staked after", amountAfter1);
+  console.log('user Staked after', amountAfter1);
 
   let lpBalanceForPoolAfter1 = (await baseShareRewardPool.poolInfo(0))
     .lpBalance;
   console.log(
-    "GLOBAL LP Balance for Pool ID 0 before: ",
+    'GLOBAL LP Balance for Pool ID 0 before: ',
     lpBalanceForPoolAfter1
   );
 };
 
 const collectExternalReward = async () => {
-  console.log("\n*** GETTING AERO FROM SHAREPOOL ***");
+  console.log('\n*** GETTING AERO FROM SHAREPOOL ***');
   let Aerobalance = await AEROContract.balanceOf(communityFund.address);
-  console.log(" AERO balance in communityFun before ", Aerobalance);
+  console.log(' AERO balance in communityFun before ', Aerobalance);
 
   tx = await baseShareRewardPool.getExternalReward(2);
   receipt = await tx.wait();
 
   let AerobalanceAfter = await AEROContract.balanceOf(communityFund.address);
-  console.log(" AERO balance in communityFund after ", AerobalanceAfter);
+  console.log(' AERO balance in communityFund after ', AerobalanceAfter);
 };
 
 const createRoute = (from, to, stable, factory) => {
@@ -321,7 +333,7 @@ const createRoute = (from, to, stable, factory) => {
 };
 
 const buyAERO_USDbC = async (amount, signer) => {
-  console.log("\n*** BUYING AERO AND USDbC ***");
+  console.log('\n*** BUYING AERO AND USDbC ***');
   const AERORoute = createRoute(WETH, AERO, false, AerodromeFactory);
   const USDbCRoute = createRoute(WETH, USDbC, false, AerodromeFactory);
 
@@ -343,29 +355,29 @@ const buyAERO_USDbC = async (amount, signer) => {
     );
     await tx.wait();
     console.log(
-      "AERO Balance Deployer after:",
+      'AERO Balance Deployer after:',
       utils.formatEther(await AEROContract.balanceOf(deployer.address))
     );
     console.log(
-      "USDbC Balance Deployer after:",
+      'USDbC Balance Deployer after:',
       utils.formatUnits(await USDbCContract.balanceOf(deployer.address), 6)
     );
   } catch (error) {
-    console.error("Error in buy Tokens:", error);
+    console.error('Error in buy Tokens:', error);
   }
 };
 
 const AddLiquidityAERO_USDbC = async (signer) => {
-  console.log("\n*** ADDING LIQUIDITY AERO-USDbC ***");
+  console.log('\n*** ADDING LIQUIDITY AERO-USDbC ***');
   let balanceUSDC = await USDbCContract.balanceOf(signer.address);
-  console.log("balanceUSDC ", balanceUSDC);
+  console.log('balanceUSDC ', balanceUSDC);
   tx = await USDbCContract.connect(signer).approve(
     AerodromeRouter,
     ethers.constants.MaxUint256
   );
   receipt = await tx.wait();
   let balanceAERO = await AEROContract.balanceOf(signer.address);
-  console.log("balanceAERO", balanceAERO);
+  console.log('balanceAERO', balanceAERO);
   tx = await AEROContract.connect(signer).approve(
     AerodromeRouter,
     ethers.constants.MaxUint256
@@ -385,7 +397,7 @@ const AddLiquidityAERO_USDbC = async (signer) => {
   receipt = await tx.wait();
   let LPbalance = await AERO_USDbCContract.balanceOf(signer.address);
 
-  console.log("AERO_USDbC LP ", LPbalance);
+  console.log('AERO_USDbC LP ', LPbalance);
 };
 
 const buyAEROWithETH = async (amount, signer) => {
@@ -439,7 +451,7 @@ const buyAndSellAERO = async (signer) => {
 };
 
 const fakeVolumeAERO_USDbC = async (signer) => {
-  console.log("\n*** FAKING VOLUME ***");
+  console.log('\n*** FAKING VOLUME ***');
   await buyAEROWithETH(10, deployer);
   await buyAndSellAERO(signer);
   await buyAndSellAERO(signer);
@@ -449,14 +461,14 @@ const fakeVolumeAERO_USDbC = async (signer) => {
 };
 
 const transferLP = async (from, to) => {
-  console.log("TRANSFERING LP");
+  console.log('TRANSFERING LP');
   const balanceLP = AERO_USDbCContract.balanceOf(from.address);
   tx = await AERO_USDbCContract.connect(from).transfer(to.address, balanceLP);
   receipt = await tx.wait();
 };
 
 const claimRewards = async (pid) => {
-  console.log("\n*** CLAIMING SWAP FEES and AERO ***");
+  console.log('\n*** CLAIMING SWAP FEES and AERO ***');
   const { token, gauge } = await baseShareRewardPool.poolInfo(pid);
   const PoolContract = new ethers.Contract(token, PoolABI, provider);
   const [claimableRewardPool0, claimableRewardPool1] =
@@ -467,7 +479,7 @@ const claimRewards = async (pid) => {
     utils.formatEther(claimableRewardPool0) * 1 > 0 ||
     utils.formatEther(claimableRewardPool1) * 1 > 0
   ) {
-    console.log("GETTING EXTERNAL SWAP FEES");
+    console.log('GETTING EXTERNAL SWAP FEES');
     tx = await baseShareRewardPool.getExternalSwapFees(0, true);
     receipt = await tx.wait();
   }
@@ -477,7 +489,7 @@ const claimRewards = async (pid) => {
     earnedInGauge = await GaugeContract.earned(baseShareRewardPool.address);
   }
   if (utils.formatEther(earnedInGauge) * 1 > 0) {
-    console.log("GETTING EXTERNAL REWARDS");
+    console.log('GETTING EXTERNAL REWARDS');
     tx = await baseShareRewardPool.getExternalReward(0);
     receipt = await tx.wait();
   }
@@ -489,7 +501,7 @@ const claimRewards = async (pid) => {
 };
 
 const setGauge = async (pid) => {
-  console.log("\n*** SETTING GAUGE ***");
+  console.log('\n*** SETTING GAUGE ***');
   const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
     AERO,
     USDbC,
@@ -501,13 +513,13 @@ const setGauge = async (pid) => {
   receipt = await tx.wait();
 };
 const removeGauge = async (pid) => {
-  console.log("\n*** REMOVING GAUGE ***");
+  console.log('\n*** REMOVING GAUGE ***');
   tx = await baseShareRewardPool.removeGauge(pid);
   receipt = await tx.wait();
 };
 
 const showStatsGauge = async (signer, AERO_USDbCGaugeContract) => {
-  console.log("\n*** SHOWING STATS ***");
+  console.log('\n*** SHOWING STATS ***');
   // const claimable0 = await AERO_USDbCContract.claimable0(signer.address);
   // const claimable1 = await AERO_USDbCContract.claimable1(signer.address);
   const [claimed0, claimed1] = await AERO_USDbCContract.connect(
@@ -520,7 +532,7 @@ const showStatsGauge = async (signer, AERO_USDbCGaugeContract) => {
   console.log({ claimed0, claimed1, earnedInGauge });
 };
 const showStatsRewardPool = async (signer, pid) => {
-  console.log("\n*** SHOWING STATS ***");
+  console.log('\n*** SHOWING STATS ***');
   const { token, gauge } = await baseShareRewardPool.poolInfo(pid);
   const PoolContract = new ethers.Contract(token, PoolABI, provider);
   const [claimableRewardPool0, claimableRewardPool1] =
@@ -554,7 +566,7 @@ const main = async () => {
   await addPool();
   await buyAERO_USDbC(1, deployer);
   await AddLiquidityAERO_USDbC(deployer);
-  await stakeInSharePool(deployer);
+  await stakeInSharePool(deployer, 0);
   // console.log("block.timestamp", (await provider.getBlock()).timestamp);
   await fakeVolumeAERO_USDbC(deployer);
   await showStatsRewardPool(deployer, 0);
@@ -566,13 +578,16 @@ const main = async () => {
   await fakeVolumeAERO_USDbC(deployer);
   await time.increase(3600);
   await showStatsRewardPool(deployer, 0);
+  await claimSharePool(deployer);
+  await showStatsRewardPool(deployer, 0);
+  await unstakeFromSharePool(deployer, 0);
+  await showStatsRewardPool(deployer, 0);
   // await fakeVolumeAERO_USDbC(deployer);
   // await showStatsRewardPool(deployer, 0);
   // await time.increase(3600);
   // await showStatsRewardPool(deployer, 0);
   // await claimRewards(0);
   // await showStatsRewardPool(deployer, 0);
-  // await claimSharePool(deployer);
   // await showStatsRewardPool(deployer, 0);
 };
 
