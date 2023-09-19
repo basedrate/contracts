@@ -12,6 +12,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./aerodrome/interfaces/IGauge.sol";
 import "./aerodrome/interfaces/IPool.sol";
 
+import "hardhat/console.sol";
+
 interface IBSHARE is IERC20 {
     function mint(address account, uint256 amount) external;
 }
@@ -84,7 +86,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
     uint256 public feePercent;
     uint256 public devPercent;
 
-    uint256 public sharesPerSecond; // = 0.00009384384 ether; // 3000 baseShare / (370 days * 24h * 60min * 60s)
+    uint256 public sharesPerSecond;
 
     uint256 public referralRate = 500;
     mapping(address => address) public referral; // referral => referrer
@@ -257,13 +259,13 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 pool.lastRewardTime,
                 block.timestamp
             );
-            uint256 lpPercent = 1000 - devPercent - feePercent;
+            uint256 lpPercent = 10000 - devPercent - feePercent;
             uint256 _generatedReward = multiplier.mul(sharesPerSecond);
             uint256 _baseShareReward = _generatedReward
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint)
                 .mul(lpPercent)
-                .div(1000);
+                .div(10000);
             accTokensPerShare = accTokensPerShare.add(
                 _baseShareReward.mul(1e18).div(tokenSupply)
             );
@@ -286,15 +288,16 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         if (block.timestamp <= pool.lastRewardTime) {
             return;
         }
+        if (!pool.isStarted) {
+            pool.isStarted = true;
+            totalAllocPoint = totalAllocPoint.add(pool.allocPoint);
+        }
         uint256 tokenSupply = pool.lpBalance;
         if (tokenSupply == 0) {
             pool.lastRewardTime = block.timestamp;
             return;
         }
-        if (!pool.isStarted) {
-            pool.isStarted = true;
-            totalAllocPoint = totalAllocPoint.add(pool.allocPoint);
-        }
+
         if (totalAllocPoint > 0) {
             uint256 multiplier = getMultiplier(
                 pool.lastRewardTime,
@@ -304,22 +307,46 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             uint256 _baseShareReward = _generatedReward
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint);
-            uint256 lpPercent = 1000 - devPercent - feePercent;
+            uint256 lpPercent = 10000 - devPercent - feePercent;
+            console.log(
+                "SHARE Balance Before dev:",
+                baseShare.balanceOf(devAddress)
+            );
+            console.log(
+                "SHARE Balance Before community:",
+                baseShare.balanceOf(feeAddress)
+            );
+            console.log(
+                "SHARE Balance Before rewardPool:",
+                baseShare.balanceOf(address(this))
+            );
             baseShare.mint(
                 devAddress,
-                _baseShareReward.mul(devPercent).div(1000)
+                _baseShareReward.mul(devPercent).div(10000)
             );
             baseShare.mint(
                 feeAddress,
-                _baseShareReward.mul(feePercent).div(1000)
+                _baseShareReward.mul(feePercent).div(10000)
             );
             baseShare.mint(
                 address(this),
-                _baseShareReward.mul(lpPercent).div(1000)
+                _baseShareReward.mul(lpPercent).div(10000)
+            );
+            console.log(
+                "SHARE Balance After dev:",
+                baseShare.balanceOf(devAddress)
+            );
+            console.log(
+                "SHARE Balance After community:",
+                baseShare.balanceOf(feeAddress)
+            );
+            console.log(
+                "SHARE Balance After rewardPool:",
+                baseShare.balanceOf(address(this))
             );
             pool.accTokensPerShare = pool.accTokensPerShare.add(
                 _baseShareReward.mul(1e18).div(tokenSupply).mul(lpPercent).div(
-                    1000
+                    10000
                 )
             );
         }
@@ -351,20 +378,20 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
     function _deposit(
         uint256 _pid,
         uint256 _amount,
-        address referrer,
+        address _referrer,
         address _staker
     ) private {
         require(
-            referrer != address(0) &&
-                referrer != _staker &&
-                referrer != address(this),
+            _referrer != address(0) &&
+                _referrer != _staker &&
+                _referrer != address(this),
             "BaseShareRewardPool: Invalid referrer"
         );
 
         if (referral[_staker] == address(0)) {
-            referral[_staker] = referrer;
+            referral[_staker] = _referrer;
         } else {
-            referrer = referral[_staker];
+            _referrer = referral[_staker];
         }
 
         PoolInfo storage pool = poolInfo[_pid];
@@ -378,11 +405,12 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 .sub(user.rewardDebt);
             if (_pending > 0) {
                 uint256 referralAmount = ((_pending) * referralRate) / 10000;
-                referralEarned[referrer] =
-                    referralEarned[referrer] +
-                    referralAmount;
-                safeBaseShareTransfer(referrer, referralAmount);
-
+                if (referralAmount > 0) {
+                    referralEarned[_referrer] =
+                        referralEarned[_referrer] +
+                        referralAmount;
+                    safeBaseShareTransfer(_referrer, referralAmount);
+                }
                 safeBaseShareTransfer(_staker, _pending);
                 emit RewardPaid(_staker, _pending);
             }
@@ -428,10 +456,12 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
 
         if (_pending > 0) {
             uint256 referralAmount = ((_pending) * referralRate) / 10000;
-            referralEarned[referrer] =
-                referralEarned[referrer] +
-                referralAmount;
-            safeBaseShareTransfer(referrer, referralAmount);
+            if (referralAmount > 0) {
+                referralEarned[referrer] =
+                    referralEarned[referrer] +
+                    referralAmount;
+                safeBaseShareTransfer(referrer, referralAmount);
+            }
 
             safeBaseShareTransfer(_sender, _pending);
             emit RewardPaid(_sender, _pending);
@@ -519,8 +549,11 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         require(isGauge, "BaseShareRewardPool: No gauge set");
         IERC20 rewardToken = IERC20(pool.gauge.rewardToken());
         pool.gauge.getReward(address(this));
-        uint256 amoutToSend = rewardToken.balanceOf(address(this));
-        rewardToken.safeTransfer(feeAddress, amoutToSend);
+        uint256 amountToSend = rewardToken.balanceOf(address(this));
+        console.log("amountToSend", amountToSend);
+        console.log("balanceBefore", rewardToken.balanceOf(feeAddress));
+        rewardToken.safeTransfer(feeAddress, amountToSend);
+        console.log("balanceAfter", rewardToken.balanceOf(feeAddress));
     }
 
     function getExternalSwapFees(
@@ -540,8 +573,14 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         }
         uint256 balanceToken0 = token0.balanceOf(address(this));
         uint256 balanceToken1 = token1.balanceOf(address(this));
+        console.log("balanceToken0", balanceToken0);
+        console.log("balanceToken1", balanceToken1);
+        console.log("balanceBefore token0", token0.balanceOf(feeAddress));
+        console.log("balanceBefore token1", token0.balanceOf(feeAddress));
         token0.safeTransfer(feeAddress, balanceToken0);
         token1.safeTransfer(feeAddress, balanceToken1);
+        console.log("balanceAfter token0", token0.balanceOf(feeAddress));
+        console.log("balanceAfter token1", token1.balanceOf(feeAddress));
     }
 
     function setFeeAddress(address _feeAddress) external onlyOwner {
@@ -574,6 +613,16 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             "BaseShareRewardPool: Zero address not allowed"
         );
         devPercent = _devPercent;
+    }
+
+    function setReferralRate(uint256 _referralRate) external onlyOwner {
+        require(_referralRate <= 500, "BaseShareRewardPool: Too high");
+        referralRate = _referralRate;
+    }
+
+    function updateEmissionRate(uint256 _sharesPerSecond) public onlyOwner {
+        massUpdatePools();
+        sharesPerSecond = _sharesPerSecond;
     }
 
     function getPoolView(uint256 pid) public view returns (PoolView memory) {
