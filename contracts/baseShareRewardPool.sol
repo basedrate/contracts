@@ -495,7 +495,21 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         );
         pool.gauge = _gauge;
         uint256 _amount = pool.token.balanceOf(address(this));
+        console.log("contract balance LP before", _amount);
+        console.log(
+            "gauge balance LP before",
+            pool.gauge.balanceOf(address(this))
+        );
+        pool.token.approve(address(pool.gauge), _amount);
         _gauge.deposit(_amount);
+        console.log(
+            "contract balance LP after",
+            pool.token.balanceOf(address(this))
+        );
+        console.log(
+            "gauge balance LP after",
+            pool.gauge.balanceOf(address(this))
+        );
     }
 
     function removeGauge(uint256 _pid) external onlyOwner {
@@ -504,8 +518,20 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         bool isGauge = address(pool.gauge) != address(0);
         require(isGauge, "BaseShareRewardPool: No gauge set");
         uint256 _amount = pool.gauge.balanceOf(address(this));
+        console.log(
+            "contract balance LP before",
+            pool.token.balanceOf(address(this))
+        );
+        console.log(
+            "gauge balance LP before",
+            pool.gauge.balanceOf(address(this))
+        );
         pool.gauge.withdraw(_amount);
         pool.gauge = IGauge(address(0));
+        console.log(
+            "contract balance LP after",
+            pool.token.balanceOf(address(this))
+        );
     }
 
     // Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -628,9 +654,15 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
     function getPoolView(uint256 pid) public view returns (PoolView memory) {
         require(pid < poolInfo.length, "BaseShareRewardPool: pid out of range");
         PoolInfo memory pool = poolInfo[pid];
-        uint256 rewardsPerSecond = pool.allocPoint.mul(sharesPerSecond).div(
-            totalAllocPoint
-        );
+        uint256 lpPercent = 10000 - devPercent - feePercent;
+        uint256 rewardsPerSecond = pool
+            .allocPoint
+            .mul(sharesPerSecond)
+            .div(totalAllocPoint)
+            .mul(lpPercent)
+            .div(10000);
+        console.log("sharesPerSecond", sharesPerSecond);
+        console.log("rewardsPerSecond", rewardsPerSecond);
         return
             PoolView({
                 pid: pid,
@@ -669,7 +701,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
                 stakedAmount: user.amount,
                 unclaimedRewards: unclaimedRewards,
                 lpBalance: lpBalance,
-                allowance: IERC20(pool.token).allowance(account, address(this))
+                allowance: pool.token.allowance(account, address(this))
             });
     }
 

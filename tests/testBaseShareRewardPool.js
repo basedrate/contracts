@@ -488,6 +488,24 @@ const claimRewards = async (pid) => {
   });
 };
 
+const setGauge = async (pid) => {
+  console.log("\n*** SETTING GAUGE ***");
+  const AERO_USDbC_LP = await AerodromeRouterContract.poolFor(
+    AERO,
+    USDbC,
+    false,
+    AerodromeFactory
+  );
+  const AERO_USDbCGauge = await AerodromeVoterContract.gauges(AERO_USDbC_LP);
+  tx = await baseShareRewardPool.setGauge(pid, AERO_USDbCGauge);
+  receipt = await tx.wait();
+};
+const removeGauge = async (pid) => {
+  console.log("\n*** REMOVING GAUGE ***");
+  tx = await baseShareRewardPool.removeGauge(pid);
+  receipt = await tx.wait();
+};
+
 const showStatsGauge = async (signer, AERO_USDbCGaugeContract) => {
   console.log("\n*** SHOWING STATS ***");
   // const claimable0 = await AERO_USDbCContract.claimable0(signer.address);
@@ -505,9 +523,10 @@ const showStatsRewardPool = async (signer, pid) => {
   console.log("\n*** SHOWING STATS ***");
   const { token, gauge } = await baseShareRewardPool.poolInfo(pid);
   const PoolContract = new ethers.Contract(token, PoolABI, provider);
-  const [claimedRewardPool0, claimedRewardPool1] = await PoolContract.connect(
-    baseShareRewardPool.address
-  ).callStatic.claimFees();
+  const [claimableRewardPool0, claimableRewardPool1] =
+    await PoolContract.connect(
+      baseShareRewardPool.address
+    ).callStatic.claimFees();
   const GaugeContract = new ethers.Contract(gauge, GaugeABI, provider);
   let earnedInGauge = 0;
   if (gauge !== ethers.constants.AddressZero) {
@@ -517,11 +536,15 @@ const showStatsRewardPool = async (signer, pid) => {
     0,
     signer.address
   );
+  const poolsViews = await baseShareRewardPool.getAllPoolViews();
+  const userViews = await baseShareRewardPool.getUserViews(signer.address);
   console.log({
-    claimedRewardPool0,
-    claimedRewardPool1,
+    claimableRewardPool0,
+    claimableRewardPool1,
     earnedInGauge,
     pendingBSHARE,
+    poolsViews,
+    userViews,
   });
 };
 
@@ -531,17 +554,26 @@ const main = async () => {
   await addPool();
   await buyAERO_USDbC(1, deployer);
   await AddLiquidityAERO_USDbC(deployer);
-  await fakeVolumeAERO_USDbC(deployer);
   await stakeInSharePool(deployer);
-  await showStatsRewardPool(deployer, 0);
+  // console.log("block.timestamp", (await provider.getBlock()).timestamp);
   await fakeVolumeAERO_USDbC(deployer);
   await showStatsRewardPool(deployer, 0);
+  await setGauge(0);
+  await fakeVolumeAERO_USDbC(deployer);
   await time.increase(3600);
   await showStatsRewardPool(deployer, 0);
-  await claimRewards(0);
+  await removeGauge(0);
+  await fakeVolumeAERO_USDbC(deployer);
+  await time.increase(3600);
   await showStatsRewardPool(deployer, 0);
-  await claimSharePool(deployer);
-  await showStatsRewardPool(deployer, 0);
+  // await fakeVolumeAERO_USDbC(deployer);
+  // await showStatsRewardPool(deployer, 0);
+  // await time.increase(3600);
+  // await showStatsRewardPool(deployer, 0);
+  // await claimRewards(0);
+  // await showStatsRewardPool(deployer, 0);
+  // await claimSharePool(deployer);
+  // await showStatsRewardPool(deployer, 0);
 };
 
 main()
