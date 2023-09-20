@@ -23,7 +23,7 @@ import "./libraries/Operator.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract BaseRate is ERC20Burnable, Operator {
     using SafeMath8 for uint8;
@@ -250,8 +250,6 @@ contract BaseRate is ERC20Burnable, Operator {
     ) internal {
         uint256 taxAmount = amount.mul(taxRate).div(10000);
         uint256 amountAfterTax = amount.sub(taxAmount);
-        console.log("taxAmount", taxAmount);
-        console.log("amountAfterTax", amountAfterTax);
         _burn(sender, taxAmount);
         _transfer(sender, recipient, amountAfterTax);
     }
@@ -265,8 +263,6 @@ contract BaseRate is ERC20Burnable, Operator {
         if (autoCalculateTax) {
             uint256 currentBratePrice = _getBratePrice();
             currentTaxRate = _updateTaxRate(currentBratePrice);
-            console.log("currentBratePrice", currentBratePrice);
-            console.log("currentTaxRate", currentTaxRate);
         }
         if (!autoCalculateTax) {
             currentTaxRate = taxRate;

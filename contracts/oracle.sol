@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPool.sol";
 
-import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract Oracle is Ownable {
     address public token0;
@@ -51,7 +51,6 @@ contract Oracle is Ownable {
     ) external view returns (uint256 amountOut) {
         uint256 currentWindow;
         uint256 length = pair.observationLength();
-        console.log("length", length);
         if (length <= 2) {
             amountOut = 1 ether;
             return amountOut;
