@@ -143,6 +143,11 @@ interface IZap {
         uint256 liquidity
     ) external view returns (uint256 amountA, uint256 amountB);
 
+  struct zapParams {
+        address ref;
+        uint256 pid;
+    }
+
     /// @notice Zap a token A into a pool (B, C). (A can be equal to B or C).
     ///         Supports standard ERC20 tokens only (i.e. not fee-on-transfer tokens etc).
     ///         Slippage is required for the initial swap.
@@ -154,7 +159,6 @@ interface IZap {
     /// @param zapInPool    Contains zap struct information. See Zap struct.
     /// @param routesA      Route used to convert input token to tokenA
     /// @param routesB      Route used to convert input token to tokenB
-    /// @param to           Address you wish to mint liquidity to.
     /// @return liquidity   Amount of LP tokens created from zapping in.
     function zapIn(
         address tokenIn,
@@ -163,7 +167,7 @@ interface IZap {
         Zap calldata zapInPool,
         Route[] calldata routesA,
         Route[] calldata routesB,
-        address to
+        zapParams calldata params
     ) external payable returns (uint256 liquidity);
 
     /// @notice Zap out a pool (B, C) into A.

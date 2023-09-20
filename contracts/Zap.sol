@@ -33,6 +33,8 @@ contract Zap is IZap, ERC2771Context {
     address public immutable voter;
     /// @inheritdoc IZap
     IWETH public immutable weth;
+    IBaseShareRewardPool public sharePool;
+
     uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
     /// @inheritdoc IZap
     address public constant ETHER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -375,8 +377,8 @@ contract Zap is IZap, ERC2771Context {
         Zap calldata zapInPool,
         Route[] calldata routesA,
         Route[] calldata routesB,
-        address to
-    ) external payable returns (uint256 liquidity) {
+        zapParams calldata params) external payable returns (uint256 liquidity) {
+        address caller = msg.sender;
         uint256 amountIn = amountInA + amountInB;
         address _tokenIn = tokenIn;
         uint256 value = msg.value;
@@ -398,8 +400,12 @@ contract Zap is IZap, ERC2771Context {
             zapInPool.factory
         );
 
+
+        liquidity = IPool(pool).mint(address(this));
+        IERC20(pool).safeApprove(address(sharePool), liquidity);
+        sharePool.depositOnBehalfOf(params.pid,liquidity,params.ref,caller);
    
-            liquidity = IPool(pool).mint(to);
+
         
 
         _returnAssets(tokenIn);
