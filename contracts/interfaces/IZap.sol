@@ -155,7 +155,6 @@ interface IZap {
     /// @param routesA      Route used to convert input token to tokenA
     /// @param routesB      Route used to convert input token to tokenB
     /// @param to           Address you wish to mint liquidity to.
-    /// @param stake        Auto-stake liquidity in corresponding gauge.
     /// @return liquidity   Amount of LP tokens created from zapping in.
     function zapIn(
         address tokenIn,
@@ -164,8 +163,7 @@ interface IZap {
         Zap calldata zapInPool,
         Route[] calldata routesA,
         Route[] calldata routesB,
-        address to,
-        bool stake
+        address to
     ) external payable returns (uint256 liquidity);
 
     /// @notice Zap out a pool (B, C) into A.

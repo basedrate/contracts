@@ -372,8 +372,7 @@ contract Zap is IZap, ERC2771Context {
         Zap calldata zapInPool,
         Route[] calldata routesA,
         Route[] calldata routesB,
-        address to,
-        bool stake
+        address to
     ) external payable returns (uint256 liquidity) {
         uint256 amountIn = amountInA + amountInB;
         address _tokenIn = tokenIn;
@@ -396,15 +395,9 @@ contract Zap is IZap, ERC2771Context {
             zapInPool.factory
         );
 
-        if (stake) {
-            liquidity = IPool(pool).mint(address(this));
-            address gauge = IVoter(voter).gauges(pool);
-            IERC20(pool).safeApprove(address(gauge), liquidity);
-            IGauge(gauge).deposit(liquidity, to);
-            IERC20(pool).safeApprove(address(gauge), 0);
-        } else {
+   
             liquidity = IPool(pool).mint(to);
-        }
+        
 
         _returnAssets(tokenIn);
         _returnAssets(zapInPool.tokenA);
