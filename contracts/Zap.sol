@@ -15,6 +15,9 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+interface IBaseShareRewardPool {
+    function depositOnBehalfOf(uint256 _pid,uint256 _amount,address _referrer,address _staker) external;
+}
 
 /// @title Protocol Router
 /// @author velodrome.finance, @pegahcarter
