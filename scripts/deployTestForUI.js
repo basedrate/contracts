@@ -1300,6 +1300,13 @@ const distibrute = async () => {
   );
 };
 
+const testUIHelper = async () => {
+  console.log("\n*** TESTING UI HELPER ***");
+  console.log(await uiHelper.getLPData(brate_eth_lp.address));
+  console.log(await uiHelper.getLPData(bshare_eth_lp.address));
+  console.log(await uiHelper.getLPData(WETH_USDbC));
+};
+
 const main = async () => {
   await setAddresses();
   await withdrawFromPresale();
@@ -1316,6 +1323,8 @@ const main = async () => {
   await time.increase(1800);
   await buyBRATE(0.1, deployer);
   await buyBSHARE(0.1, deployer);
+
+  await testUIHelper();
 
   //   await sendBRATEAndBSHAREToPresaleDistributor();
 

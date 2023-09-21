@@ -8,11 +8,14 @@ contract UIHelper {
     struct LPData {
         address token0;
         address token1;
+        string symbol0;
+        string symbol1;
         uint8 decimals0;
         uint8 decimals1;
         uint256 reserve0;
         uint256 reserve1;
         bool stable;
+        uint256 supply;
         uint256 token0InToken1Out;
         uint256 token1InToken0Out;
     }
@@ -23,19 +26,22 @@ contract UIHelper {
         lpData = LPData({
             token0: pool.token0(),
             token1: pool.token1(),
+            symbol0: IERC20(pool.token0()).symbol(),
+            symbol1: IERC20(pool.token1()).symbol(),
             decimals0: IERC20(pool.token0()).decimals(),
             decimals1: IERC20(pool.token1()).decimals(),
             reserve0: pool.reserve0(),
             reserve1: pool.reserve1(),
             stable: pool.stable(),
+            supply: IERC20(address(pool)).totalSupply(),
             token0InToken1Out: _getAmountOut(
                 10 ** IERC20(pool.token0()).decimals(),
                 pool.token0(),
                 pool.reserve0(),
                 pool.reserve1(),
                 pool.token0(),
-                IERC20(pool.token0()).decimals(),
-                IERC20(pool.token1()).decimals(),
+                10 ** IERC20(pool.token0()).decimals(),
+                10 ** IERC20(pool.token1()).decimals(),
                 pool.stable()
             ),
             token1InToken0Out: _getAmountOut(
@@ -44,8 +50,8 @@ contract UIHelper {
                 pool.reserve0(),
                 pool.reserve1(),
                 pool.token0(),
-                IERC20(pool.token0()).decimals(),
-                IERC20(pool.token1()).decimals(),
+                10 ** IERC20(pool.token0()).decimals(),
+                10 ** IERC20(pool.token1()).decimals(),
                 pool.stable()
             )
         });
