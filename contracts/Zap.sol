@@ -400,14 +400,10 @@ contract Zap is IZap, ERC2771Context {
             zapInPool.factory
         );
 
-
         liquidity = IPool(pool).mint(address(this));
         IERC20(pool).safeApprove(address(sharePool), liquidity);
         sharePool.depositOnBehalfOf(params.pid,liquidity,params.ref,caller);
    
-
-        
-
         _returnAssets(tokenIn);
         _returnAssets(zapInPool.tokenA);
         _returnAssets(zapInPool.tokenB);
