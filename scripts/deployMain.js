@@ -283,23 +283,23 @@ const setRewardPool = async () => {
   receipt = await tx.wait();
   console.log("\nBSHARE_ETH_LP added");
   tx = await baseShareRewardPool.add(
-    500,
+    300,
     WETH_USDbC,
     true,
     startTimeSharePool,
-    300,
-    300,
+    400,
+    0,
     WETH_USDbC_GAUGE
   );
   receipt = await tx.wait();
   console.log("\nWETH_USDbC added");
   tx = await baseShareRewardPool.add(
-    500,
+    700,
     AERO_USDbC,
     true,
     startTimeSharePool,
-    200,
-    200,
+    400,
+    0,
     AERO_USDbC_GAUGE
   );
   receipt = await tx.wait();
@@ -367,8 +367,8 @@ const main = async () => {
   await setOperators();
   await setRewardPool();
   await stakeBSHAREINBoardroom();
-  // await sendBRATEAndBSHAREToPresaleDistributor();
-  // TODO ZAP
+    // await sendBRATEAndBSHAREToPresaleDistributor();
+    // TODO ZAP
 
 };
 
