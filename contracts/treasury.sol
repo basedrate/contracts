@@ -339,16 +339,16 @@ contract Treasury is ContractGuard, Operator {
         // Dynamic max expansion percent
         supplyTiers = [
             0 ether,
-            1000e6 ether,
-            1100e6 ether,
-            1200e6 ether,
-            1300e6 ether,
-            1400e6 ether,
-            1500e6 ether,
-            1600e6 ether,
-            2000e6 ether
+            100 ether,
+            120 ether,
+            150 ether,
+            200 ether,
+            220 ether,
+            250 ether,
+            270 ether,
+            300 ether
         ];
-        maxExpansionTiers = [350, 325, 300, 250, 225, 200, 150, 125, 100];
+        maxExpansionTiers = [250, 200, 175, 160, 120, 100, 90, 80, 75];
 
         maxSupplyExpansionPercent = 400; // Upto 4.0% supply for expansion
 
@@ -360,8 +360,8 @@ contract Treasury is ContractGuard, Operator {
         premiumThreshold = 110;
         premiumPercent = 7000;
 
-        // First 6 epochs with 2.5% expansion
-        bootstrapEpochs = 6;
+        // First 12 epochs with 2.5% expansion
+        bootstrapEpochs = 12;
         bootstrapSupplyExpansionPercent = 250; //2.5% to account for baseRate reward emissions during this time
 
         // set seigniorageSaved to it's balance
