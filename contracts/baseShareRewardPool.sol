@@ -480,6 +480,11 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
             aeroVoter.isGauge(address(_gauge)),
             "BaseShareRewardPool: Gauge is not valid"
         );
+        IERC20 stakingToken = IERC20(_gauge.stakingToken());
+        require(
+            pool.token == stakingToken,
+            "BaseShareRewardPool: Incorrect gauge!"
+        );
         pool.gauge = _gauge;
         uint256 _amount = pool.token.balanceOf(address(this));
         pool.token.approve(address(pool.gauge), _amount);
@@ -645,7 +650,7 @@ contract BaseShareRewardPool is ReentrancyGuard, Ownable {
         PoolInfo memory pool = poolInfo[pid];
         UserInfo memory user = userInfo[pid][account];
         uint256 unclaimedRewards = pendingShare(pid, account);
-        uint256 lpBalance = pool.lpBalance;
+        uint256 lpBalance = pool.token.balanceOf(account);
         return
             UserView({
                 pid: pid,
