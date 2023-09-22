@@ -30,6 +30,7 @@ let baseRate,
   boardroom,
   treasury,
   oracle,
+  zap,
   presaleDistributor,
   brate_eth_lp,
   bshare_eth_lp; //contracts
@@ -46,6 +47,14 @@ const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
 const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
 const AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 const USDbC = "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA";
+
+const Forwarder = "0x15e62707fca7352fbe35f51a8d6b0f8066a05dcc";
+const Voter = "0x16613524e02ad97edfef371bc883f2f5d6c480a5";
+
+
+
+
+
 const team1 = process.env.team1;
 const team2 = process.env.team2;
 const team3 = process.env.team3;
@@ -112,6 +121,19 @@ const setAddresses = async () => {
   await setBalance(buyer3.address, utils.parseEther("1000000000"));
 };
 
+const deployZap = async () => {
+  console.log("\n*** DEPLOYING ZAP ***");
+  const FactoryReg = await AerodromeRouterContract.factoryRegistry();
+  const Zap = await ethers.getContractFactory("Zap", deployer);
+  try {
+    zap = await Zap.deploy(Forwarder, FactoryReg, AerodromeFactory, Voter, WETH);
+    await zap.deployed();
+    console.log(`Zap deployed to ${zap.address}`);
+  } catch (error) {
+    console.error("Error deploying Zap:", error);
+  }
+};
+
 const deployContracts = async () => {
   console.log("\n*** DEPLOYING CONTRACTS ***");
   const TeamDistributor = await ethers.getContractFactory(
@@ -176,6 +198,9 @@ const deployContracts = async () => {
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
 };
+
+
+
 
 const deployOracle = async () => {
   console.log("\n*** DEPLOYING ORACLE ***");
@@ -1309,6 +1334,7 @@ const distibrute = async () => {
   );
 };
 
+
 const main = async () => {
   // const { router, poolFactory } = await deployAERO();
   // AerodromeRouter = router;
@@ -1321,10 +1347,12 @@ const main = async () => {
   // );
 
   await setAddresses();
-  await withdrawFromPresale();
+  await deployZap();
+  // await withdrawFromPresale();
   await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
+
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();
@@ -1332,11 +1360,13 @@ const main = async () => {
 
   await setRewardPool();
   await stakeBSHAREINBoardroom();
+
   await sendBRATEAndBSHAREToPresaleDistributor();
 
   await time.increase(6 * 3600);
 
   await claimTest(13);
+
 
   //  await time.increase(6 * 3600);
   // await allocateSeigniorage();
