@@ -67,7 +67,6 @@ const supplyBRATEForPresale = utils.parseEther("33.825");
 const supplyBSHAREForPresale = utils.parseEther("27.497799");
 const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
-
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
   // [deployer, oldDevWallet] = await ethers.getSigners();
