@@ -121,18 +121,6 @@ const setAddresses = async () => {
   await setBalance(buyer3.address, utils.parseEther("1000000000"));
 };
 
-const deployZap = async () => {
-  console.log("\n*** DEPLOYING ZAP ***");
-  const FactoryReg = await AerodromeRouterContract.factoryRegistry();
-  const Zap = await ethers.getContractFactory("Zap", deployer);
-  try {
-    zap = await Zap.deploy(Forwarder, FactoryReg, AerodromeFactory, Voter, WETH);
-    await zap.deployed();
-    console.log(`Zap deployed to ${zap.address}`);
-  } catch (error) {
-    console.error("Error deploying Zap:", error);
-  }
-};
 
 const deployContracts = async () => {
   console.log("\n*** DEPLOYING CONTRACTS ***");
@@ -1334,6 +1322,19 @@ const distibrute = async () => {
   );
 };
 
+const deployZap = async () => {
+  console.log("\n*** DEPLOYING ZAP ***");
+  const FactoryReg = await AerodromeRouterContract.factoryRegistry();
+  const Zap = await ethers.getContractFactory("Zap", deployer);
+  try {
+    zap = await Zap.deploy(Forwarder, FactoryReg, AerodromeFactory, Voter, WETH,baseShareRewardPool.address);
+    await zap.deployed();
+    console.log(`Zap deployed to ${zap.address}`);
+  } catch (error) {
+    console.error("Error deploying Zap:", error);
+  }
+};
+
 
 const main = async () => {
   // const { router, poolFactory } = await deployAERO();
@@ -1347,12 +1348,12 @@ const main = async () => {
   // );
 
   await setAddresses();
-  await deployZap();
+  
   // await withdrawFromPresale();
   await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
   await deployOracle();
-
+  await deployZap();
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();

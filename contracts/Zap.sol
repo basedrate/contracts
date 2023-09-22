@@ -53,12 +53,14 @@ contract Zap is IZap, ERC2771Context {
         address _factoryRegistry,
         address _factory,
         address _voter,
-        address _weth
+        address _weth,
+        IBaseShareRewardPool _sharePool
     ) ERC2771Context(_forwarder) {
         factoryRegistry = _factoryRegistry;
         defaultFactory = _factory;
         voter = _voter;
         weth = IWETH(_weth);
+        sharePool = _sharePool;
     }
 
     receive() external payable {
