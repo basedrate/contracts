@@ -1335,6 +1335,87 @@ const deployZap = async () => {
   }
 };
 
+const isValidAddress = (address) => {
+  try {
+    return ethers.utils.isAddress(address);
+  } catch (error) {
+    return false;
+  }
+};
+
+function checkAddressValidity(address, addressName) {
+  if (isValidAddress(address)) {
+      console.log(`${addressName} is valid: ${address}`);
+  } else {
+      console.error(`Invalid ${addressName}: ${address}`);
+  }
+}
+
+const testZap = async () => {
+  console.log("\n*** TEST ZAP ***");
+  console.log("zap in BRATE_ETH_LP");
+
+  const tokenIn = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE"; 
+
+  checkAddressValidity(baseRate.address, "baseRate address");
+  checkAddressValidity(WETH, "WETH");
+  checkAddressValidity(AerodromeFactory, "AerodromeFactory");
+  checkAddressValidity(zap.address, "zap address");
+  checkAddressValidity(tokenIn, "tokenIn");
+
+  const amountInA = ethers.utils.parseEther("1"); 
+  const amountInB = ethers.utils.parseEther("1"); 
+  
+  const zapInPool = {
+    tokenA: WETH,
+    tokenB: baseRate.address,
+    stable: true,
+    factory: AerodromeFactory
+  };
+  
+  const routesA = [{
+    fromToken: WETH,
+    toToken: baseRate.address,
+  }];
+
+  console.log("routesA", routesA);
+  
+  const routesB = [];
+  
+  const params = {
+    pid: 1,
+    ref: baseRate.address,
+  };
+
+  console.log("zapIn Parameters: ", JSON.stringify({
+    tokenIn,
+    amountInA: amountInA.toString(),
+    amountInB: amountInB.toString(),
+    zapInPool,
+    routesA,
+    routesB,
+    params,
+    value: ethers.utils.parseEther("2").toString()
+  }, null, 2));
+
+  try {
+    const tx = await zap.zapIn(
+      tokenIn,
+      amountInA,
+      amountInB,
+      zapInPool,
+      routesA,
+      routesB,
+      params,
+      { value: ethers.utils.parseEther("2") }
+    );
+    const receipt = await tx.wait();
+    console.log("Transaction successful:", receipt);
+  } catch (error) {
+    console.error("Error executing zapIn:", error);
+  }
+};
+
 
 const main = async () => {
   // const { router, poolFactory } = await deployAERO();
@@ -1360,13 +1441,17 @@ const main = async () => {
   await setOperators();
 
   await setRewardPool();
-  await stakeBSHAREINBoardroom();
 
-  await sendBRATEAndBSHAREToPresaleDistributor();
+  await testZap();
 
-  await time.increase(6 * 3600);
 
-  await claimTest(13);
+  // await stakeBSHAREINBoardroom();
+
+  // await sendBRATEAndBSHAREToPresaleDistributor();
+
+  // await time.increase(6 * 3600);
+
+  // await claimTest(13);
 
 
   //  await time.increase(6 * 3600);
