@@ -1351,6 +1351,15 @@ function checkAddressValidity(address, addressName) {
   }
 }
 
+const enableSwapBshare = async (caller) => {
+  console.log("\n*** ENABLE SWAP ***");
+  tx = await baseShare
+    .connect(caller)
+    .setSwap(true);
+  receipt = await tx.wait();
+
+};
+
 const testZap = async () => {
   console.log("\n*** TEST ZAP ***");
   console.log("zap in BRATE_ETH_LP");
@@ -1487,11 +1496,55 @@ const main = async () => {
   // await sellBSHARE(0.1, deployer);
   // await sellBSHARE(0.1, deployer);
 
-  // await getBalance();
-  // await getTotalSupply();
-  // await sellBSHARE(10, deployer);
-  // await getTotalSupply();
-  // await getBalance();
+
+  await sellBSHARE(1, deployer);
+  await sellBSHARE(1, deployer);
+  await sellBSHARE(1, deployer);
+  await sellBSHARE(1, deployer);
+  await sellBSHARE(1, deployer);
+  await sellBSHARE(1, deployer);
+  await sellBRATE(1, deployer);
+  await buyBSHARE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await sellBRATE(1, deployer);
+  await viewOracle();
+  await time.increase(6 * 3600);
+  await viewOracle();
+ // await enableSwapBshare(deployer);
+
+  await getBalance();
+  await getTotalSupply();
+  await sellBSHARE(1, deployer);
+  await getTotalSupply();
+  await getBalance();
+
+  await getBalance();
+  await getTotalSupply();
+  await sellBSHARE(10, deployer);
+  await getTotalSupply();
+  await getBalance();
 
   // console.log(
   //   await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
