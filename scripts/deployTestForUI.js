@@ -109,6 +109,7 @@ const setAddresses = async () => {
   await setBalance(buyer1.address, utils.parseEther("1000000000"));
   await setBalance(buyer2.address, utils.parseEther("1000000000"));
   await setBalance(buyer3.address, utils.parseEther("1000000000"));
+  await setBalance(REF, utils.parseEther("1000000000"));
 };
 
 const deployContracts = async () => {
@@ -1363,24 +1364,15 @@ const main = async () => {
   await AddLiquidityAEROUSDC(deployer);
   await stakeInSharePool(deployer);
 
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  //  await time.increase(6 * 3600);
-  // await allocateSeigniorage();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+
   // await testBonds(deployer);
   // await testAllocate(deployer);
   // await disableTax();

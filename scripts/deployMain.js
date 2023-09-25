@@ -15,7 +15,7 @@ const PresaleABI = [
 ];
 const utils = ethers.utils;
 const provider = ethers.provider;
-require('dotenv').config();
+require("dotenv").config();
 
 const { deployAERO } = require("./deployAERO");
 
@@ -34,7 +34,7 @@ let baseRate,
   brate_eth_lp,
   bshare_eth_lp; //contracts
 let presaleContractBalance; //values
-const sharePerSecond = 93843840000000;
+const sharePerSecond = 0.00011574074 * 1e18;
 const Presale = "0xf47567B9d6Ee249FcD60e8Ab9635B32F8ac87659";
 let AerodromeRouter = "0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43";
 let AerodromeFactory = "0x420dd381b31aef6683db6b902084cb0ffece40da";
@@ -47,7 +47,7 @@ const team1 = process.env.team1;
 const team2 = process.env.team2;
 const team3 = process.env.team3;
 const team4 = process.env.team4;
-const zero =  "0x0000000000000000000000000000000000000000";
+const zero = "0x0000000000000000000000000000000000000000";
 
 let AerodromeRouterContract = new ethers.Contract(
   AerodromeRouter,
@@ -141,9 +141,17 @@ const deployContracts = async () => {
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
   console.log("\n*** CREATING PAIRS WITH NO LIQUIDITY ***");
-  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseRate.address, WETH, true)
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(
+    baseRate.address,
+    WETH,
+    true
+  );
   receipt = await tx.wait();
-  tx = await AerodromeFactoryContract.connect(deployer).createPool(baseShare.address, WETH, false)
+  tx = await AerodromeFactoryContract.connect(deployer).createPool(
+    baseShare.address,
+    WETH,
+    false
+  );
   receipt = await tx.wait();
   console.log("\n*** DEPLOYING ORACLE ***");
 
@@ -197,9 +205,7 @@ const setParameters = async () => {
   console.log("\n*** SETTING ORACLE in TOKENS ***");
   tx = await baseRate.setOracle(oracle.address);
   tx = await baseShare.setOracle(oracle.address);
-  console.log(
-    "\n*** EXCLUDING FROM FEE ***"
-  );
+  console.log("\n*** EXCLUDING FROM FEE ***");
   tx = await baseRate.excludeAddress(treasury.address);
   receipt = await tx.wait();
   tx = await baseRate.excludeAddress(boardroom.address);
@@ -367,9 +373,8 @@ const main = async () => {
   await setOperators();
   await setRewardPool();
   await stakeBSHAREINBoardroom();
-    // await sendBRATEAndBSHAREToPresaleDistributor();
-    // TODO ZAP
-
+  // await sendBRATEAndBSHAREToPresaleDistributor();
+  // TODO ZAP
 };
 
 main()

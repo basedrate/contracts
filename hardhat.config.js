@@ -12,11 +12,11 @@ module.exports = {
         interval: 1000,
       },
       forking: {
-        url: "https://rpc.notadegen.com/base", //mainnet
+        url: "https://base.blockpi.network/v1/rpc/public", //mainnet
       },
     },
     baseMain: {
-      url: `https://rpc.notadegen.com/base`,
+      url: `https://base.blockpi.network/v1/rpc/public`,
       accounts: [process.env.privateKey, process.env.privateKeyRef],
     },
   },
