@@ -28,6 +28,7 @@ let baseRate,
   communityFund,
   baseShareRewardPool,
   boardroom,
+  uiHelper,
   treasury,
   oracle,
   presaleDistributor,
@@ -154,6 +155,11 @@ const deployContracts = async () => {
   );
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
+
+  const UIHelper = await ethers.getContractFactory("UIHelper", deployer);
+  uiHelper = await UIHelper.deploy();
+  await uiHelper.deployed();
+  console.log(`UIHelper deployed to ${uiHelper.address}`);
 
   console.log("\n*** CREATING PAIRS WITH NO LIQUIDITY ***");
   tx = await AerodromeFactoryContract.connect(deployer).createPool(
