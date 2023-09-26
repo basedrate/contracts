@@ -43,6 +43,10 @@ const WETH_USDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
 const WETH_USDbC_GAUGE = "0xeca7Ff920E7162334634c721133F3183B83B0323";
 const AERO_USDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
 const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
+const EXTRA = "0x5d166646411D0D0a0a4AC01C4596f8DF2d5C781a";
+const EXTRA_SHARE = '500000000000000000';
+const EXTRA_RATE = '625000000000000000'; 
+
 const team1 = process.env.team1;
 const team2 = process.env.team2;
 const team3 = process.env.team3;
@@ -63,8 +67,8 @@ let AerodromeFactoryContract = new ethers.Contract(
 
 const startTime = 1695859200; // treasury
 const startTimeSharePool = 1695837600; // sharePool and presale
-const supplyBRATEForPresale = utils.parseEther("33.825");
-const supplyBSHAREForPresale = utils.parseEther("27.497799");
+const supplyBRATEForPresale = utils.parseEther("34.45");
+const supplyBSHAREForPresale = utils.parseEther("27.997799");
 const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
 const setAddresses = async () => {
@@ -356,6 +360,22 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   receipt = await tx.wait();
 };
 
+const addExtraToPresaleDistributor = async () => {
+  console.log("\n*** ADDING EXTRA TO PRESALE DISTRIBUTOR ***");
+
+
+  tx = await presaleDistributor.updateSingleUserMan(EXTRA,EXTRA_RATE,EXTRA_SHARE);
+  receipt = await tx.wait();
+
+  const extraValues = await presaleDistributor.users(EXTRA);
+  console.log("extra presale values", extraValues);
+
+  const values = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values);
+
+};
+
+
 const setTeamAddresses = async () => {
   console.log("\n*** SETTING TEAM ADDRESSES ***");
   await teamDistributor.setCaller(deployer.address);
@@ -373,7 +393,8 @@ const main = async () => {
   await setOperators();
   await setRewardPool();
   await stakeBSHAREINBoardroom();
-  // await sendBRATEAndBSHAREToPresaleDistributor();
+  await sendBRATEAndBSHAREToPresaleDistributor();
+  await addExtraToPresaleDistributor();
   // TODO ZAP
 };
 

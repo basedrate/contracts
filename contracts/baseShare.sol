@@ -37,7 +37,7 @@ contract BaseShare is ERC20Burnable, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 public constant PRESALE_ALLOCATION = 27.5 ether;
+    uint256 public constant PRESALE_ALLOCATION = 28 ether;
     uint256 public constant LIQUIDITY_ALLOCATION = 21 ether; // plus one
     IRouter public constant ROUTER =
         IRouter(0xcF77a3Ba9A5CA399B7c97c74d54e5b1Beb874E43);
