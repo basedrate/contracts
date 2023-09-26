@@ -1471,29 +1471,29 @@ const main = async () => {
   // await buyBRATE(deployer, 1);
   // await time.increase(3600);
 
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
-  console.log(
-    "Balance BRATE:",
-    utils.formatEther(await baseRate.balanceOf(treasury.address))
-  );
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
-  console.log(
-    "Balance BRATE:",
-    utils.formatEther(await baseRate.balanceOf(treasury.address))
-  );
-  await time.increase(6 * 3600);
-  await allocateSeigniorage();
-  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
-  console.log(
-    "Balance BRATE:",
-    utils.formatEther(await baseRate.balanceOf(treasury.address))
-  );
+  // await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  // console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  // console.log(
+  //   "Balance BRATE:",
+  //   utils.formatEther(await baseRate.balanceOf(treasury.address))
+  // );
+  // await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  // console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  // console.log(
+  //   "Balance BRATE:",
+  //   utils.formatEther(await baseRate.balanceOf(treasury.address))
+  // );
+  // await time.increase(6 * 3600);
+  // await allocateSeigniorage();
+  // console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  // console.log(
+  //   "Balance BRATE:",
+  //   utils.formatEther(await baseRate.balanceOf(treasury.address))
+  // );
 
-  return;
+  // return;
 
   await withdrawFromPresale();
   await deployContracts();
