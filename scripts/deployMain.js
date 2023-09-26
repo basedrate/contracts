@@ -186,18 +186,23 @@ const deployContracts = async () => {
 
 
 const AddLiquidity = async () => {
-  console.log("\n*** MINTING INITIAL SUPPLY ***");
-  tx = await baseRate.connect(deployer).transfer(
-    oldDevWallet.address,
-    supplyBRATEETH
-  );
-  receipt = await tx.wait();
+  console.log("\n*** SENDING INITIAL SUPPLY ***");
 
   tx = await baseShare.connect(deployer).transfer(
     oldDevWallet.address,
     supplyBSHAREETH
   );
   receipt = await tx.wait();
+  console.log("bshare transfered*");
+
+  tx = await baseRate.connect(deployer).transfer(
+    oldDevWallet.address,
+    supplyBRATEETH
+  );
+  receipt = await tx.wait();
+  console.log("brate transfered*");
+
+
 
   console.log(
     "BRATE Balance:",
@@ -586,18 +591,18 @@ const main = async () => {
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();
-  
-  await withdrawFromPresale();
-  await AddLiquidity();
-
   await setOperators();
   await setRewardPool();
   await stakeBSHAREINBoardroom();
   await sendBRATEAndBSHAREToPresaleDistributor();
   await addExtraToPresaleDistributor();
-  await time.increase(32 * 3600);
-  // await delay(5 * 60 * 1000);
+  // await time.increase(36 * 3600);
+  await delay(5 * 60 * 1000);
   await allocateSeigniorage();
+  await withdrawFromPresale();
+  await AddLiquidity();
+
+
 
 
 };
