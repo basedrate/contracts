@@ -181,6 +181,17 @@ const deployContracts = async () => {
   await uiHelper.deployed();
   console.log(`UIHelper deployed to ${uiHelper.address}`);
 };
+const attachContracts = async () => {
+  const BaseRate = await ethers.getContractFactory("BaseRate", deployer);
+  baseRate = BaseRate.attach("0xd260115030b9fB6849da169a01ed80b6496d1e99");
+  console.log(`BaseRate attached to ${baseRate.address}`);
+  const BaseShare = await ethers.getContractFactory("BaseShare", deployer);
+  baseShare = BaseShare.attach("0x608d5401d377228E465Ba6113517dCf9bD1f95CA");
+  console.log(`BaseShare attached to ${baseShare.address}`);
+  const BaseBond = await ethers.getContractFactory("BaseBond", deployer);
+  baseBond = BaseBond.attach("0xc9210FF20ebBAB41dBecF9D5Bf4D1d2ea15E986c");
+  console.log(`BaseBond attached to ${baseBond.address}`);
+};
 
 const deployOracle = async () => {
   console.log("\n*** DEPLOYING ORACLE ***");
@@ -1062,9 +1073,8 @@ const buyBRATE = async (amount, signer) => {
   }
 };
 
-const sellBRATE = async (amount, caller) => {
+const sellBRATE = async (caller, amount) => {
   console.log("\n*** SELLING BRATE ***");
-
   console.log("Tax ", await baseRate.taxRate());
 
   tx = await baseRate
@@ -1350,6 +1360,32 @@ const claimAll = async (signer) => {
 
 const main = async () => {
   await setAddresses();
+  // await attachContracts();
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBRATE(deployer, 1);
+  // await time.increase(3600);
+
   await withdrawFromPresale();
   await deployContracts();
   await mintInitialSupplyAndAddLiquidity();
@@ -1383,64 +1419,30 @@ const main = async () => {
 
   // await claimAll(deployer);
 
-  // await testBonds(deployer);
-  // await testAllocate(deployer);
-  // await disableTax();
-
-  // await sellBRATE(0.1, deployer);
-  // await sellBRATE(0.1, deployer);
-  // await sellBRATE(0.1, deployer);
-  // await sellBRATE(0.1, deployer);
-
-  // await sellBSHARE(0.1, deployer);
-  // await sellBSHARE(0.1, deployer);
-  // await sellBSHARE(0.1, deployer);
-
-  // await getBalance();
-  // await getTotalSupply();
-  // await sellBSHARE(10, deployer);
-  // await getTotalSupply();
-  // await getBalance();
-
-  // console.log(
-  //   await brate_eth_lp.prices(baseRate.address, utils.parseEther("1"), 8)
-  // );
-
-  // test logic
-
-  // await buyAERO_USDbColdDev(1);
-  // await AddLiquidityEthUSDColdDeployer();
-  //   await AddLiquidityEthUSDC();
-
-  // await stakeInSharePoolOldDev();
-  // await unStakeInSharePool();
-  // await unStakeInSharePoolOldDev();
-  // await setTeamAddresses();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  // await distibrute();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  // await distibrute();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  // await distibrute();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
-  // await distibrute();
-  // await mintBrate();
-  // await disableTax();
-  // await sellBRATE(0.1);
-  // await time.increase(1800);
-  // await enableTax();
-  // await buyAERO_USDbC(1);
-  // await viewOracle();
-
-  // await time.increase(6 * 3600);
-  // await collectExternalReward();
-  // await unStakeInSharePool();
-  // await time.increase(6 * 3600);
-  // await allocateSeigniorage();
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
+  await sellBRATE(deployer, 2);
+  await time.increase(3600);
 };
 
 main()

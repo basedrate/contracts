@@ -183,7 +183,9 @@ contract BaseShare is ERC20Burnable, Operator {
     }
 
     function _getBratePrice() internal view returns (uint256 _bratePrice) {
-        try IOracle(oracle).twap(address(this), 1e18) returns (uint144 _price) {
+        try IOracle(oracle).twap(address(BRATE), 1e18) returns (
+            uint144 _price
+        ) {
             return uint256(_price);
         } catch {
             revert("Brate: failed to fetch BRATE price from Oracle");
