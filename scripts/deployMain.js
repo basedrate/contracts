@@ -28,6 +28,7 @@ let baseRate,
   communityFund,
   baseShareRewardPool,
   boardroom,
+  uiHelper,
   treasury,
   oracle,
   presaleDistributor,
@@ -155,6 +156,11 @@ const deployContracts = async () => {
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
 
+  const UIHelper = await ethers.getContractFactory("UIHelper", deployer);
+  uiHelper = await UIHelper.deploy();
+  await uiHelper.deployed();
+  console.log(`UIHelper deployed to ${uiHelper.address}`);
+
   console.log("\n*** CREATING PAIRS WITH NO LIQUIDITY ***");
   tx = await AerodromeFactoryContract.connect(deployer).createPool(
     baseRate.address,
@@ -246,6 +252,7 @@ const AddLiquidity = async () => {
   );
 
   bshare_eth_lp = new ethers.Contract(BSHARE_ETH_LP, PoolABI, provider);
+  brate_eth_lp = new ethers.Contract(BRATE_ETH_LP, PoolABI, provider);
 
   console.log(" BSHARE_ETH_LP = ", BSHARE_ETH_LP);
   console.log(" BRATE_ETH_LP = ", BRATE_ETH_LP);
@@ -261,7 +268,7 @@ const AddLiquidity = async () => {
     supplyBSHAREETH,
     0,
     0,
-    deployer.address,
+    communityFund.address,
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETHforBSHARELiquidity }
   );
@@ -272,7 +279,7 @@ const AddLiquidity = async () => {
     supplyBRATEETH,
     0,
     0,
-    deployer.address,
+    communityFund.address,
     Math.floor(Date.now() / 1000 + 86400),
     { value: ETHforBRATELiquidity }
   );
@@ -283,8 +290,17 @@ const AddLiquidity = async () => {
   console.log();
   receipt = await tx.wait();
   console.log("BRATE_ETH_LP and BSHARE_ETH_LP added as LP");
-};
 
+
+  console.log(
+    "bshare_eth_lp communityFund Balance:",
+    utils.formatEther(await bshare_eth_lp.balanceOf(communityFund.address))
+  );
+  console.log(
+    "brate_eth_lp communityFund Balance:",
+    utils.formatEther(await brate_eth_lp.balanceOf(communityFund.address))
+  );
+};
 
 const initializeBoardroom = async () => {
   console.log("\n*** INITIALIZING BOARDROOM ***");
@@ -324,6 +340,8 @@ const setParameters = async () => {
   tx = await baseRate.setOracle(oracle.address);
   tx = await baseShare.setOracle(oracle.address);
   console.log("\n*** EXCLUDING FROM FEE ***");
+  tx = await baseRate.excludeAddress(baseShare.address);
+  receipt = await tx.wait();
   tx = await baseRate.excludeAddress(treasury.address);
   receipt = await tx.wait();
   tx = await baseRate.excludeAddress(boardroom.address);
@@ -601,9 +619,6 @@ const main = async () => {
   await allocateSeigniorage();
   await withdrawFromPresale();
   await AddLiquidity();
-
-
-
 
 };
 
