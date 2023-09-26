@@ -191,6 +191,28 @@ const attachContracts = async () => {
   const BaseBond = await ethers.getContractFactory("BaseBond", deployer);
   baseBond = BaseBond.attach("0xc9210FF20ebBAB41dBecF9D5Bf4D1d2ea15E986c");
   console.log(`BaseBond attached to ${baseBond.address}`);
+  const TeamDistributor = await ethers.getContractFactory(
+    "TeamDistributor",
+    deployer
+  );
+  teamDistributor = TeamDistributor.attach(
+    "0xD8363377cb54E82d40D0EC44D01d366E4b15eA0b"
+  );
+  console.log(`TeamDistributor attached to ${teamDistributor.address}`);
+  const CommunityFund = await ethers.getContractFactory(
+    "CommunityFund",
+    deployer
+  );
+  communityFund = CommunityFund.attach(
+    "0x514cE5da2Dc5883e40625b6e182dB437D87941A7"
+  );
+  console.log(`CommunityFund attached to ${communityFund.address}`);
+  const Treasury = await ethers.getContractFactory("Treasury", deployer);
+  treasury = Treasury.attach("0xdfa73618683587E1B72019546E0DD866B2Ed6Fb4");
+  console.log(`Treasury attached to ${treasury.address}`);
+  const Boardroom = await ethers.getContractFactory("Boardroom", deployer);
+  boardroom = Boardroom.attach("0x60268690851a4881d1e1660fA2b565a316c9bD2b");
+  console.log(`Boardroom attached to ${boardroom.address}`);
 };
 
 const deployOracle = async () => {
@@ -1030,7 +1052,7 @@ const buyBSHARE = async (amount, signer) => {
   }
 };
 
-const buyBRATE = async (amount, signer) => {
+const buyBRATE = async (signer, amount) => {
   console.log("\n*** BUYING BRATE ***");
   console.log("Tax ", await baseRate.taxRate());
 
@@ -1117,7 +1139,7 @@ const sellBRATE = async (caller, amount) => {
   }
 };
 
-const sellBSHARE = async (amount, caller) => {
+const sellBSHARE = async (caller, amount) => {
   console.log("\n*** SELLING BSHARE ***");
 
   console.log("Tax ", await baseShare.taxRate());
@@ -1137,7 +1159,7 @@ const sellBSHARE = async (amount, caller) => {
       utils.formatEther(await baseShare.balanceOf(caller.address))
     );
 
-    const tx2 = await AerodromeRouterContract.connect(
+    tx = await AerodromeRouterContract.connect(
       caller
     ).swapExactTokensForETHSupportingFeeOnTransferTokens(
       utils.parseEther(amount.toString()),
@@ -1146,7 +1168,7 @@ const sellBSHARE = async (amount, caller) => {
       caller.address,
       Math.floor(Date.now() / 1000) + 24 * 86400
     );
-    await tx2.wait();
+    await tx.wait();
 
     console.log(
       "BSHARE Balance after:",
@@ -1360,7 +1382,8 @@ const claimAll = async (signer) => {
 
 const main = async () => {
   await setAddresses();
-  // await attachContracts();
+  await attachContracts();
+
   // await sellBRATE(deployer, 1);
   // await time.increase(3600);
   // await sellBRATE(deployer, 1);
@@ -1385,6 +1408,92 @@ const main = async () => {
   // await time.increase(3600);
   // await sellBRATE(deployer, 1);
   // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await sellBSHARE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+  // await buyBRATE(deployer, 1);
+  // await time.increase(3600);
+
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  console.log(
+    "Balance BRATE:",
+    utils.formatEther(await baseRate.balanceOf(treasury.address))
+  );
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  console.log(
+    "Balance BRATE:",
+    utils.formatEther(await baseRate.balanceOf(treasury.address))
+  );
+  await time.increase(6 * 3600);
+  await allocateSeigniorage();
+  console.log("Reserve:", utils.formatEther(await treasury.getReserve()));
+  console.log(
+    "Balance BRATE:",
+    utils.formatEther(await baseRate.balanceOf(treasury.address))
+  );
+
+  return;
 
   await withdrawFromPresale();
   await deployContracts();

@@ -45,7 +45,7 @@ contract BaseShare is ERC20Burnable, Operator {
         0x420DD381b31aEf6683db6B902084cB0FFECe40Da;
     address public constant WETH = 0x4200000000000000000000000000000000000006;
     address public BRATE;
-    bool public swap;
+    bool public swap = true;
 
     constructor(address _BRATE) ERC20("BasedRate.io SHARE", "BSHARE") {
         BRATE = _BRATE;
