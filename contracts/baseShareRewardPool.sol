@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./aerodrome/interfaces/IGauge.sol";
 import "./aerodrome/interfaces/IPool.sol";
 import "./aerodrome/interfaces/IVoter.sol";
@@ -19,7 +20,7 @@ interface IBSHARE is IERC20 {
     function mint(address account, uint256 amount) external;
 }
 
-contract BaseShareRewardPool is ReentrancyGuard, Ownable {
+contract BaseShareRewardPool is ReentrancyGuard, Ownable, Multicall {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IBSHARE;

@@ -1340,6 +1340,14 @@ const testUIHelper = async () => {
   console.log(await uiHelper.getLPData(WETH_USDbC));
 };
 
+const claimAll = async (signer) => {
+  console.log("\n*** CLAIMING ALL***");
+  const interface = baseShareRewardPool.interface;
+  const data = interface.encodeFunctionData("withdraw", [0, 0]);
+  tx = await baseShareRewardPool.connect(signer).multicall([data]);
+  receipt = await tx.wait();
+};
+
 const main = async () => {
   await setAddresses();
   await withdrawFromPresale();
@@ -1372,6 +1380,8 @@ const main = async () => {
   await allocateSeigniorage();
   await time.increase(6 * 3600);
   await allocateSeigniorage();
+
+  // await claimAll(deployer);
 
   // await testBonds(deployer);
   // await testAllocate(deployer);
