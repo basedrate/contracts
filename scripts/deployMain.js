@@ -47,6 +47,8 @@ const EXTRA = "0x5d166646411D0D0a0a4AC01C4596f8DF2d5C781a";
 const EXTRA_SHARE = '500000000000000000';
 const EXTRA_RATE = '625000000000000000'; 
 
+
+
 const team1 = process.env.team1;
 const team2 = process.env.team2;
 const team3 = process.env.team3;
@@ -69,6 +71,12 @@ const startTime = 1695859200; // treasury
 const startTimeSharePool = 1695837600; // sharePool and presale
 const supplyBRATEForPresale = utils.parseEther("34.45");
 const supplyBSHAREForPresale = utils.parseEther("27.997799");
+const supplyBRATEETH = utils.parseEther("25");
+const supplyBSHAREETH = utils.parseEther("20");
+const ETHforBRATELiquidity = utils.parseEther("25");
+const ETHforBSHARELiquidity = utils.parseEther("25");
+
+
 const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
 const setAddresses = async () => {
@@ -77,8 +85,12 @@ const setAddresses = async () => {
   deployer = await ethers.getImpersonatedSigner(
     "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
   );
+  oldDevWallet = await ethers.getImpersonatedSigner(
+    "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
+  );
   console.log(`Deployer: ${deployer.address}`);
-  await setBalance(deployer.address, utils.parseEther("1000000000"));
+  console.log(`oldDeployer: ${oldDevWallet.address}`);
+
 };
 
 const deployContracts = async () => {
@@ -144,6 +156,7 @@ const deployContracts = async () => {
   );
   await presaleDistributor.deployed();
   console.log(`presaleDistributor deployed to ${presaleDistributor.address}`);
+
   console.log("\n*** CREATING PAIRS WITH NO LIQUIDITY ***");
   tx = await AerodromeFactoryContract.connect(deployer).createPool(
     baseRate.address,
@@ -157,6 +170,7 @@ const deployContracts = async () => {
     false
   );
   receipt = await tx.wait();
+
   console.log("\n*** DEPLOYING ORACLE ***");
 
   const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
@@ -171,6 +185,103 @@ const deployContracts = async () => {
   await oracle.deployed();
   console.log(`Oracle deployed to ${oracle.address}`);
 };
+
+
+const AddLiquidity = async () => {
+  console.log("\n*** MINTING INITIAL SUPPLY ***");
+  tx = await baseRate.connect(deployer).transfer(
+    oldDevWallet.address,
+    supplyBRATEETH
+  );
+  receipt = await tx.wait();
+
+  tx = await baseShare.connect(deployer).transfer(
+    oldDevWallet.address,
+    supplyBSHAREETH
+  );
+  receipt = await tx.wait();
+
+  console.log(
+    "BRATE Balance:",
+    utils.formatEther(await baseRate.balanceOf(oldDevWallet.address))
+  );
+  console.log(
+    "BSHARE Balance:",
+    utils.formatEther(await baseShare.balanceOf(oldDevWallet.address))
+  );
+
+  // tx = await AerodromeFactoryContract.connect(oldDevWallet).createPool(
+  //   baseRate.address,
+  //   WETH,
+  //   true
+  // );
+  // receipt = await tx.wait();
+
+  // tx = await AerodromeFactoryContract.connect(oldDevWallet).createPool(
+  //   baseShare.address,
+  //   WETH,
+  //   false
+  // );
+  // receipt = await tx.wait();
+
+  // console.log("pools created");
+
+  const BRATE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseRate.address,
+    WETH,
+    true,
+    AerodromeFactory
+  );
+
+  brate_eth_lp = new ethers.Contract(BRATE_ETH_LP, PoolABI, provider);
+
+  const BSHARE_ETH_LP = await AerodromeRouterContract.poolFor(
+    baseShare.address,
+    WETH,
+    false,
+    AerodromeFactory
+  );
+
+  bshare_eth_lp = new ethers.Contract(BSHARE_ETH_LP, PoolABI, provider);
+
+  console.log(" BSHARE_ETH_LP = ", BSHARE_ETH_LP);
+  console.log(" BRATE_ETH_LP = ", BRATE_ETH_LP);
+
+  console.log("\n*** ADDING LIQUIDITY ***");
+  tx = await baseRate.connect(oldDevWallet).approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await baseShare.connect(oldDevWallet).approve(AerodromeRouter, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await AerodromeRouterContract.connect(oldDevWallet).addLiquidityETH(
+    baseShare.address,
+    false,
+    supplyBSHAREETH,
+    0,
+    0,
+    deployer.address,
+    Math.floor(Date.now() / 1000 + 86400),
+    { value: ETHforBSHARELiquidity }
+  );
+
+  tx = await AerodromeRouterContract.connect(oldDevWallet).addLiquidityETH(
+    baseRate.address,
+    true,
+    supplyBRATEETH,
+    0,
+    0,
+    deployer.address,
+    Math.floor(Date.now() / 1000 + 86400),
+    { value: ETHforBRATELiquidity }
+  );
+
+  tx = await baseRate.connect(deployer).setLP(BRATE_ETH_LP, true);
+  receipt = await tx.wait();
+  tx = await baseShare.connect(deployer).setLP(BSHARE_ETH_LP, true);
+  console.log();
+  receipt = await tx.wait();
+  console.log("BRATE_ETH_LP and BSHARE_ETH_LP added as LP");
+};
+
 
 const initializeBoardroom = async () => {
   console.log("\n*** INITIALIZING BOARDROOM ***");
@@ -376,6 +487,36 @@ const addExtraToPresaleDistributor = async () => {
 };
 
 
+const withdrawFromPresale = async () => {
+  console.log("\n*** WITHDRAWING FROM PRESALE ***");
+
+  const initialBalance = await ethers.provider.getBalance(oldDevWallet.address);
+  console.log(
+    "Initial balance of oldDevWallet:",
+    utils.formatEther(initialBalance)
+  );
+
+  const presaleContractBalance = await PresaleContract.checkContractBalance();
+  console.log("presaleContractBalance", presaleContractBalance);
+
+  const tx = await PresaleContract.connect(oldDevWallet).WithdrawETHcall(
+    presaleContractBalance
+  );
+  const receipt = await tx.wait();
+  console.log(
+    "Withdrew from presale:",
+    utils.formatEther(presaleContractBalance)
+  );
+
+  const finalBalance = await ethers.provider.getBalance(oldDevWallet.address);
+  console.log(
+    "Final balance of oldDevWallet:",
+    utils.formatEther(finalBalance)
+  );
+};
+
+
+
 const setTeamAddresses = async () => {
   console.log("\n*** SETTING TEAM ADDRESSES ***");
   await teamDistributor.setCaller(deployer.address);
@@ -390,12 +531,16 @@ const main = async () => {
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();
+
+  await withdrawFromPresale();
+  await AddLiquidity();
+  
   await setOperators();
   await setRewardPool();
-  await stakeBSHAREINBoardroom();
+  // await stakeBSHAREINBoardroom();
   await sendBRATEAndBSHAREToPresaleDistributor();
   await addExtraToPresaleDistributor();
-  // TODO ZAP
+
 };
 
 main()
