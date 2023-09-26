@@ -47,8 +47,6 @@ const EXTRA = "0x5d166646411D0D0a0a4AC01C4596f8DF2d5C781a";
 const EXTRA_SHARE = '500000000000000000';
 const EXTRA_RATE = '625000000000000000'; 
 
-
-
 const team1 = process.env.team1;
 const team2 = process.env.team2;
 const team3 = process.env.team3;
@@ -67,7 +65,7 @@ let AerodromeFactoryContract = new ethers.Contract(
   provider
 );
 
-const startTime = 1695859200; // treasury
+const startTime = 1695837600; // treasury
 const startTimeSharePool = 1695837600; // sharePool and presale
 const supplyBRATEForPresale = utils.parseEther("34.45");
 const supplyBSHAREForPresale = utils.parseEther("27.997799");
@@ -465,10 +463,33 @@ const sendBRATEAndBSHAREToPresaleDistributor = async () => {
   const presaleContractuserCount = await PresaleContract.userCount();
   const userCountAsInt = parseInt(presaleContractuserCount.toString(), 10);
   console.log("presaleContractuserCount", userCountAsInt);
-  tx = await presaleDistributor.updateAllUsers();
-  const values = await presaleDistributor.getTotalValues();
-  console.log("summed presale values", values);
+
+  tx = await presaleDistributor.updateUsers(0,25);
   receipt = await tx.wait();
+  const values0 = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values0);
+
+  tx = await presaleDistributor.updateUsers(25,50);
+  receipt = await tx.wait();
+  const values1 = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values1);
+
+
+  tx = await presaleDistributor.updateUsers(50,75);
+  receipt = await tx.wait();
+  const values2 = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values2);
+
+  tx = await presaleDistributor.updateUsers(75,100);
+  receipt = await tx.wait();
+  const values3 = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values3);
+
+  tx = await presaleDistributor.updateUsers(100,122);
+  receipt = await tx.wait();
+  const values4 = await presaleDistributor.getTotalValues();
+  console.log("summed presale values", values4);
+  
 };
 
 const addExtraToPresaleDistributor = async () => {
@@ -524,6 +545,40 @@ const setTeamAddresses = async () => {
   console.log("Team addresses have been set!");
 };
 
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+
+const allocateSeigniorage = async () => {
+  console.log("\n*** ALLOCATING SEIGNORAGE ***");
+  console.log(
+    "BRATE Balance TeamDistributor Before:",
+    utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
+  );
+  console.log(
+    "BRATE Balance Community Fund Before:",
+    utils.formatEther(await baseRate.balanceOf(communityFund.address))
+  );
+  console.log(
+    "BRATE Balance Boardroom Before:",
+    utils.formatEther(await baseRate.balanceOf(boardroom.address))
+  );
+  tx = await treasury.allocateSeigniorage();
+  receipt = await tx.wait();
+  console.log(
+    "BRATE Balance TeamDistributor After:",
+    utils.formatEther(await baseRate.balanceOf(teamDistributor.address))
+  );
+  console.log(
+    "BRATE Balance Community Fund After:",
+    utils.formatEther(await baseRate.balanceOf(communityFund.address))
+  );
+  console.log(
+    "BRATE Balance Boardroom After:",
+    utils.formatEther(await baseRate.balanceOf(boardroom.address))
+  );
+};
+
+
 const main = async () => {
   await setAddresses();
   await deployContracts();
@@ -531,15 +586,19 @@ const main = async () => {
   await initializeBoardroom();
   await initializeTreasury();
   await setParameters();
-
+  
   await withdrawFromPresale();
   await AddLiquidity();
-  
+
   await setOperators();
   await setRewardPool();
-  // await stakeBSHAREINBoardroom();
+  await stakeBSHAREINBoardroom();
   await sendBRATEAndBSHAREToPresaleDistributor();
   await addExtraToPresaleDistributor();
+  await time.increase(32 * 3600);
+  // await delay(5 * 60 * 1000);
+  await allocateSeigniorage();
+
 
 };
 
