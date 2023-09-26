@@ -611,12 +611,12 @@ const main = async () => {
   await setParameters();
   await setOperators();
   await setRewardPool();
-  // await stakeBSHAREINBoardroom();
-  // await sendBRATEAndBSHAREToPresaleDistributor();
-  // await addExtraToPresaleDistributor();
+  await stakeBSHAREINBoardroom();
+  await sendBRATEAndBSHAREToPresaleDistributor();
+  await addExtraToPresaleDistributor();
   // await time.increase(36 * 3600);
-  // await delay(5 * 60 * 1000);
-  // await allocateSeigniorage();
+  await delay(5 * 60 * 1000);
+  await allocateSeigniorage();
   await withdrawFromPresale();
   await AddLiquidity();
 
