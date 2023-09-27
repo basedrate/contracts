@@ -47,6 +47,7 @@ const AERO_USDbC_GAUGE = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
 const EXTRA = "0x5d166646411D0D0a0a4AC01C4596f8DF2d5C781a";
 const EXTRA_SHARE = '500000000000000000';
 const EXTRA_RATE = '625000000000000000'; 
+const CALLER = "0x52a7b845930260ad8c682a531fb947766e56e324";
 
 const team1 = process.env.team1;
 const team2 = process.env.team2;
@@ -344,36 +345,44 @@ const setParameters = async () => {
   console.log("\n*** EXCLUDING FROM FEE ***");
   tx = await baseRate.excludeAddress(baseShare.address);
   receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(treasury.address);
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(boardroom.address);
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(communityFund.address);
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(teamDistributor.address);
-  receipt = await tx.wait();
-  tx = await baseRate.excludeAddress(presaleDistributor.address);
-  receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(treasury.address);
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(boardroom.address);
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(communityFund.address);
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(teamDistributor.address);
+  // receipt = await tx.wait();
+  // tx = await baseRate.excludeAddress(presaleDistributor.address);
+  // receipt = await tx.wait();
   tx = await baseRate.enableAutoCalculateTax();
   receipt = await tx.wait();
   console.log("\n*** TAX ENABLED ***");
-  tx = await baseShare.excludeAddress(treasury.address);
-  receipt = await tx.wait();
-  tx = await baseShare.excludeAddress(boardroom.address);
-  receipt = await tx.wait();
-  tx = await baseShare.excludeAddress(communityFund.address);
-  receipt = await tx.wait();
-  tx = await baseShare.excludeAddress(teamDistributor.address);
-  receipt = await tx.wait();
-  tx = await baseShare.excludeAddress(presaleDistributor.address);
-  receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(treasury.address);
+  // receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(boardroom.address);
+  // receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(communityFund.address);
+  // receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(teamDistributor.address);
+  // receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(presaleDistributor.address);
+  // receipt = await tx.wait();
   tx = await baseShare.excludeAddress(baseShare.address);
   receipt = await tx.wait();
-  tx = await baseShare.excludeAddress(baseShareRewardPool.address);
-  receipt = await tx.wait();
+  // tx = await baseShare.excludeAddress(baseShareRewardPool.address);
+  // receipt = await tx.wait();
   tx = await baseShare.enableAutoCalculateTax();
   receipt = await tx.wait();
   console.log("\n*** TAX ENABLED ***");
+
+  tx = await teamDistributor.setCaller(CALLER);
+  receipt = await tx.wait();
+  console.log("\n*** Caller SET ***");
+  
+
+
+  
 };
 
 const setOperators = async () => {
@@ -615,8 +624,10 @@ const main = async () => {
   await setRewardPool();
   await stakeBSHAREINBoardroom();
   console.log("waiting 5 minutes")
-  await delay(5 * 60 * 1000);
+  //await delay(5 * 60 * 1000);
+  await time.increase(6 * 3600);
   await allocateSeigniorage();
+
   await withdrawFromPresale();
   await AddLiquidity();
   await sendBRATEAndBSHAREToPresaleDistributor();
