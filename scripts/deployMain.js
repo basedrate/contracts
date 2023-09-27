@@ -81,13 +81,13 @@ const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
-  // [deployer, oldDevWallet] = await ethers.getSigners();
-  deployer = await ethers.getImpersonatedSigner(
-    "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
-  );
-  oldDevWallet = await ethers.getImpersonatedSigner(
-    "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
-  );
+   [deployer, oldDevWallet] = await ethers.getSigners();
+  // deployer = await ethers.getImpersonatedSigner(
+  //   "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
+  // );
+  // oldDevWallet = await ethers.getImpersonatedSigner(
+  //   "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
+  // );
   console.log(`Deployer: ${deployer.address}`);
   console.log(`oldDeployer: ${oldDevWallet.address}`);
 
@@ -621,13 +621,13 @@ const main = async () => {
   await initializeTreasury();
   await setParameters();
   await setOperators();
-  await setRewardPool();
+  
   await stakeBSHAREINBoardroom();
   console.log("waiting 5 minutes")
-  //await delay(5 * 60 * 1000);
-  await time.increase(6 * 3600);
+  await delay(5 * 60 * 1000);
+ // await time.increase(6 * 3600);
   await allocateSeigniorage();
-
+  await setRewardPool();
   await withdrawFromPresale();
   await AddLiquidity();
   await sendBRATEAndBSHAREToPresaleDistributor();
