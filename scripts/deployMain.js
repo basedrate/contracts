@@ -184,6 +184,8 @@ const deployContracts = async () => {
     AerodromeFactory
   );
 
+  console.log("BRATE_ETH_LP", BRATE_ETH_LP);
+
   const Oracle = await ethers.getContractFactory("Oracle", deployer);
   oracle = await Oracle.deploy(BRATE_ETH_LP);
   await oracle.deployed();
@@ -293,11 +295,11 @@ const AddLiquidity = async () => {
 
 
   console.log(
-    "bshare_eth_lp communityFund Balance:",
+    "bshare_eth_lp communityFund Balance: ",BRATE_ETH_LP," ",
     utils.formatEther(await bshare_eth_lp.balanceOf(communityFund.address))
   );
   console.log(
-    "brate_eth_lp communityFund Balance:",
+    "brate_eth_lp communityFund Balance: ",BSHARE_ETH_LP," ",
     utils.formatEther(await brate_eth_lp.balanceOf(communityFund.address))
   );
 };
@@ -612,13 +614,13 @@ const main = async () => {
   await setOperators();
   await setRewardPool();
   await stakeBSHAREINBoardroom();
-  await sendBRATEAndBSHAREToPresaleDistributor();
-  await addExtraToPresaleDistributor();
-  // await time.increase(36 * 3600);
+  console.log("waiting 5 minutes")
   await delay(5 * 60 * 1000);
   await allocateSeigniorage();
   await withdrawFromPresale();
   await AddLiquidity();
+  await sendBRATEAndBSHAREToPresaleDistributor();
+  await addExtraToPresaleDistributor();
 
 };
 
