@@ -81,13 +81,13 @@ const PresaleContract = new ethers.Contract(Presale, PresaleABI, provider);
 
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
-   [deployer, oldDevWallet] = await ethers.getSigners();
-  // deployer = await ethers.getImpersonatedSigner(
-  //   "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
-  // );
-  // oldDevWallet = await ethers.getImpersonatedSigner(
-  //   "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
-  // );
+  //  [deployer, oldDevWallet] = await ethers.getSigners();
+  deployer = await ethers.getImpersonatedSigner(
+    "0xadf9152100c536e854e0ed7a3e0e60275cef7e7d"
+  );
+  oldDevWallet = await ethers.getImpersonatedSigner(
+    "0xc92879d115fa23d6d7da27946f0dab96ea2db706"
+  );
   console.log(`Deployer: ${deployer.address}`);
   console.log(`oldDeployer: ${oldDevWallet.address}`);
 
@@ -451,7 +451,7 @@ const setRewardPool = async () => {
     AERO_USDbC,
     true,
     startTimeSharePool,
-    400,
+    200,
     0,
     AERO_USDbC_GAUGE
   );
