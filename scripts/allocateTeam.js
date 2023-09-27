@@ -38,7 +38,7 @@ const waitUntilNextEpochPoint = async () => {
   const nextEpochPoint = await treasury.nextEpochPoint();
   const currentTime = Math.floor(Date.now() / 1000);
   const waitTime = nextEpochPoint.toNumber() + 10 - currentTime; 
-  console.log(`Waiting for ${waitTime} seconds until next Epoch Point + 5 minutes...`);
+  console.log(`Waiting for ${waitTime} seconds until next Epoch Point + 10 seconds...`);
   await new Promise((resolve) => setTimeout(resolve, waitTime * 1000)); 
 };
 
@@ -66,10 +66,10 @@ const main = async () => {
   await setAddresses();
   await attachContracts();
   while (true) {
-    
-    await allocate();
-    await automatedDistribution();
+
     await waitUntilNextEpochPoint();
+    await allocate();
+    await automatedDistribution();  
     
   }
 };
