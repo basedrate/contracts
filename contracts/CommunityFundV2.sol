@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./aerodrome/interfaces/IPool.sol";
 
-contract CommunityFundV2 is AccessControl {
+contract CommunityFundV2 is AccessControl, Multicall {
     using Address for address payable;
     using SafeERC20 for IERC20;
 
@@ -27,7 +28,7 @@ contract CommunityFundV2 is AccessControl {
         _grantRole(CALLER_ROLE, _msgSender());
     }
 
-    function recoverBnb() external onlyRole(CALLER_ROLE) {
+    function recoverETH() external onlyRole(CALLER_ROLE) {
         payable(_msgSender()).sendValue(address(this).balance);
     }
 
@@ -46,14 +47,13 @@ contract CommunityFundV2 is AccessControl {
         token.safeTransfer(to, token.balanceOf(address(this)));
     }
 
-    
     // to interact with other contracts
     function sendCustomTransaction(
         address target,
         uint value,
         string memory signature,
         bytes memory data
-    ) public payable onlyRole(CALLER_ROLE)  returns (bytes memory) {
+    ) public payable onlyRole(CALLER_ROLE) returns (bytes memory) {
         bytes32 txHash = keccak256(abi.encode(target, value, signature, data));
         bytes memory callData;
         if (bytes(signature).length == 0) {
@@ -73,7 +73,6 @@ contract CommunityFundV2 is AccessControl {
 
         return returnData;
     }
-
 
     receive() external payable {}
 }
