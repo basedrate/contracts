@@ -28,8 +28,8 @@ contract CommunityFundV2 is AccessControl, Multicall {
         _grantRole(CALLER_ROLE, _msgSender());
     }
 
-    function recoverETH() external onlyRole(CALLER_ROLE) {
-        payable(_msgSender()).sendValue(address(this).balance);
+    function recoverETH(address payable to) external onlyRole(CALLER_ROLE) {
+        to.sendValue(address(this).balance);
     }
 
     function getExternalSwapFees(
