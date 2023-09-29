@@ -12,7 +12,7 @@ const { utils, provider } = ethers;
 
 let tx, receipt; //transactions
 let deployer, user; //wallet
-let communityFund;
+let oldCommunityFund, newCommunityFund;
 
 const vAMMWETHUSDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
 const vAMMWETHBSHARE = "0xF909B746Ce48dede23c09B05B3fA27754E768Bd2";
@@ -30,7 +30,7 @@ const setAddresses = async () => {
       "0xADF9152100c536e854e0ed7A3E0E60275CeF7E7d"
     );
   } else {
-    // [deployer] = await ethers.getSigners();
+    [deployer] = await ethers.getSigners();
   }
   console.log(`Deployer: ${deployer.address}`);
 };
@@ -40,41 +40,52 @@ const attachContracts = async () => {
     "CommunityFund",
     deployer
   );
-  communityFund = CommunityFund.attach(OLD_COMMUNITY_FUND);
-  console.log(`CommunityFund deployed to ${communityFund.address}`);
+  oldCommunityFund = CommunityFund.attach(OLD_COMMUNITY_FUND);
+  console.log(`CommunityFundV2 attached to ${oldCommunityFund.address}`);
+  const CommunityFundV2 = await ethers.getContractFactory(
+    "CommunityFundV2",
+    deployer
+  );
+  newCommunityFund = CommunityFundV2.attach(NEW_COMMUNITY_FUND);
+  console.log(`CommunityFundV2 attached to ${newCommunityFund.address}`);
 };
 
-const recoverTokens = async (token, to) => {
-  console.log("\n*** RECOVERING TOKENS ***");
+const recoverTokens = async (token, fromContract, to) => {
+  console.log("*** RECOVERING TOKENS ***");
   const tokenContract = new ethers.Contract(token, ERC20ABI, provider);
   const balanceStart = await tokenContract.balanceOf(to);
-  tx = await communityFund.recoverTokens(token, to);
+  tx = await fromContract.recoverTokens(token, to);
   receipt = await tx.wait();
   const balanceFinish = await tokenContract.balanceOf(to);
   const decimals = await tokenContract.decimals();
   const balanceWithdrew = balanceFinish.sub(balanceStart);
   console.log("Withdrew:", utils.formatUnits(balanceWithdrew, decimals));
+  console.log(
+    "BalanceOf new owner:",
+    utils.formatUnits(await tokenContract.balanceOf(to), decimals)
+  );
 };
 
 const main = async () => {
   await setAddresses();
   await attachContracts();
 
-  console.log("withdrawing BSHARE to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(BSHARE, NEW_COMMUNITY_FUND);
-  console.log("withdrawing BRATE to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(BRATE, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing BSHARE to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(BSHARE, oldCommunityFund, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing BRATE to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(BRATE, oldCommunityFund, NEW_COMMUNITY_FUND);
 
-  
-  console.log("withdrawing vAMMWETHUSDbC to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(vAMMWETHUSDbC, NEW_COMMUNITY_FUND);
-  console.log("withdrawing vAMMWETHBSHARE to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(vAMMWETHBSHARE, NEW_COMMUNITY_FUND);
-  console.log("withdrawing vAMMAEROUSDbC to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(vAMMAEROUSDbC, NEW_COMMUNITY_FUND);
-  console.log("withdrawing sAMMWETHBRATE to ", NEW_COMMUNITY_FUND)
-  await recoverTokens(sAMMWETHBRATE, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing vAMMWETHUSDbC to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(vAMMWETHUSDbC, oldCommunityFund, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing vAMMWETHBSHARE to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(vAMMWETHBSHARE, oldCommunityFund, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing vAMMAEROUSDbC to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(vAMMAEROUSDbC, oldCommunityFund, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing sAMMWETHBRATE to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(sAMMWETHBRATE, oldCommunityFund, NEW_COMMUNITY_FUND);
 
+  console.log("\nTESTING GET BACK TOKENS FROM NEW COMMUNITY FUND");
+  await recoverTokens(BSHARE, newCommunityFund, deployer.address);
 };
 
 main()
