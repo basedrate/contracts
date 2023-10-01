@@ -21,6 +21,10 @@ const WETH = "0x4200000000000000000000000000000000000006";
 const BASEHAREREWARDPOOL = "0xbCE487e8BAe42370536544ed533Bada46bCCF6Ef";
 const BRATE = "0xd260115030b9fB6849da169a01ed80b6496d1e99";
 const BSHARE = "0x608d5401d377228E465Ba6113517dCf9bD1f95CA";
+const USDR = "0x9483ab65847a447e36d21af1cab8c87e9712ff93";
+const USDbC = "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca";
+const gauge_USDR_USDbC = "0xF64957C35409055776C7122AC655347ef88eaF9B";
+
 const zero = "0x0000000000000000000000000000000000000000";
 
 
@@ -81,9 +85,14 @@ const main = async () => {
   await setAddresses();
   await attachContracts();
   const startTime = 1696017600;
-  console.log("\n*** BRATE-BSHARE ***");
+
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
-  await addPool(BRATE, BSHARE,false,zero, startTime, 1000, 0, 0);
+
+  console.log("\n*** BRATE-BSHARE ***");
+  await addPool(BRATE, BSHARE,false,zero, startTime, 300, 0, 0);
+
+  console.log("\n*** USDR-USDbC ***");
+  await addPool(USDR, USDbC,false,gauge_USDR_USDbC, startTime, 300, 400, 0);
 
 };
 
