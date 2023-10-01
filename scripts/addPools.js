@@ -84,7 +84,7 @@ const addPool = async (token0, token1, stable,gauge, startTime, alloc, feeIn,fee
 const main = async () => {
   await setAddresses();
   await attachContracts();
-  const startTime = 1696017600;
+  const startTime = 1696269600;
 
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
 
