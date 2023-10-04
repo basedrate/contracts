@@ -52,7 +52,7 @@ const setAddresses = async () => {
       "0xADF9152100c536e854e0ed7A3E0E60275CeF7E7d"
     );
   } else {
-    [deployer] = await ethers.getSigners();
+   // [deployer] = await ethers.getSigners();
   }
   console.log(`Deployer: ${deployer.address}`);
 };
@@ -87,18 +87,23 @@ const addPool = async (token0, token1, stable,gauge, startTime, alloc, feeIn,fee
 const main = async () => {
   await setAddresses();
   await attachContracts();
+  
+  //main
+ // const startTime = 1696525200;
+  //test
 
-  const startTime = 1696525200;
+  const startTime = 1696446000;
+
 
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
 
-  console.log("\n*** BRATE-BSHARE ***");
+  console.log("\n*** BRATE-USDbC ***");
   await addPool(BRATE, USDbC,false,zero, startTime, 700, 0, 0);
 
-  console.log("\n*** BRATE-BSHARE ***");
+  console.log("\n*** BSHARE-USDbC ***");
   await addPool(BSHARE, USDbC,false,zero, startTime, 700, 0, 0);
 
-  console.log("\n*** USDR-USDbC ***");
+  console.log("\n*** OVN-USDplus ***");
   await addPool(OVN, USDplus,false,gauge_OVN_USDplus, startTime, 700, 200, 0);
 
 };
