@@ -17,6 +17,7 @@ let oldCommunityFund, newCommunityFund;
 const vAMMWETHUSDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
 const vAMMWETHBSHARE = "0xF909B746Ce48dede23c09B05B3fA27754E768Bd2";
 const vAMMAEROUSDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
+const vAMMWUSDRUSDbC = "0x3Fc28BFac25fC8e93B5b2fc15EfBBD5a8aA44eFe";
 const sAMMWETHBRATE = "0x8071175D8fe0055048B0654B10c88CAD5D2D1F19";
 const BSHARE = "0x608d5401d377228E465Ba6113517dCf9bD1f95CA";
 const BRATE = "0xd260115030b9fB6849da169a01ed80b6496d1e99";
@@ -41,13 +42,13 @@ const attachContracts = async () => {
     deployer
   );
   oldCommunityFund = CommunityFund.attach(OLD_COMMUNITY_FUND);
-  console.log(`CommunityFundV2 attached to ${oldCommunityFund.address}`);
+  console.log(`OldCommunityFund attached to ${oldCommunityFund.address}`);
   const CommunityFundV2 = await ethers.getContractFactory(
     "CommunityFundV2",
     deployer
   );
   newCommunityFund = CommunityFundV2.attach(NEW_COMMUNITY_FUND);
-  console.log(`CommunityFundV2 attached to ${newCommunityFund.address}`);
+  console.log(`NewCommunityFund attached to ${newCommunityFund.address}`);
 };
 
 const recoverTokens = async (token, fromContract, to) => {
@@ -70,8 +71,8 @@ const main = async () => {
   await setAddresses();
   await attachContracts();
 
-  console.log("\nwithdrawing BSHARE to ", NEW_COMMUNITY_FUND);
-  await recoverTokens(BSHARE, oldCommunityFund, NEW_COMMUNITY_FUND);
+  // console.log("\nwithdrawing BSHARE to ", NEW_COMMUNITY_FUND);
+  // await recoverTokens(BSHARE, oldCommunityFund, NEW_COMMUNITY_FUND);
   console.log("\nwithdrawing BRATE to ", NEW_COMMUNITY_FUND);
   await recoverTokens(BRATE, oldCommunityFund, NEW_COMMUNITY_FUND);
 
@@ -81,11 +82,13 @@ const main = async () => {
   await recoverTokens(vAMMWETHBSHARE, oldCommunityFund, NEW_COMMUNITY_FUND);
   console.log("\nwithdrawing vAMMAEROUSDbC to ", NEW_COMMUNITY_FUND);
   await recoverTokens(vAMMAEROUSDbC, oldCommunityFund, NEW_COMMUNITY_FUND);
+  console.log("\nwithdrawing vAMMAEROUSDbC to ", NEW_COMMUNITY_FUND);
+  await recoverTokens(vAMMWUSDRUSDbC, oldCommunityFund, NEW_COMMUNITY_FUND);
   console.log("\nwithdrawing sAMMWETHBRATE to ", NEW_COMMUNITY_FUND);
   await recoverTokens(sAMMWETHBRATE, oldCommunityFund, NEW_COMMUNITY_FUND);
 
-  console.log("\nTESTING GET BACK TOKENS FROM NEW COMMUNITY FUND");
-  await recoverTokens(BSHARE, newCommunityFund, deployer.address);
+  // console.log("\nTESTING GET BACK TOKENS FROM NEW COMMUNITY FUND");
+  // await recoverTokens(BSHARE, newCommunityFund, deployer.address);
 };
 
 main()
