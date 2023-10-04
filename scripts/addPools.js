@@ -89,10 +89,9 @@ const main = async () => {
   await attachContracts();
   
   //main
- // const startTime = 1696525200;
+   const startTime = 1696525200;
   //test
-
-  const startTime = 1696446000;
+  // const startTime = 1696446000;
 
 
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
