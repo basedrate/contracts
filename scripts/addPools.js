@@ -23,6 +23,9 @@ const BRATE = "0xd260115030b9fB6849da169a01ed80b6496d1e99";
 const BSHARE = "0x608d5401d377228E465Ba6113517dCf9bD1f95CA";
 const USDR = "0x9483ab65847a447e36d21af1cab8c87e9712ff93";
 const USDbC = "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca";
+const OVN = "0xA3d1a8DEB97B111454B294E2324EfAD13a9d8396";
+const USDplus = "0xB79DD08EA68A908A97220C76d19A6aA9cBDE4376";
+const gauge_OVN_USDplus = "0x00B2149d89677a5069eD4D303941614A33700146";
 const gauge_USDR_USDbC = "0xF64957C35409055776C7122AC655347ef88eaF9B";
 
 const zero = "0x0000000000000000000000000000000000000000";
@@ -85,15 +88,18 @@ const main = async () => {
   await setAddresses();
   await attachContracts();
 
-  const startTime = 1696352400;
+  const startTime = 1696525200;
 
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
 
   console.log("\n*** BRATE-BSHARE ***");
-  await addPool(BRATE, BSHARE,false,zero, startTime, 300, 0, 0);
+  await addPool(BRATE, USDbC,false,zero, startTime, 700, 0, 0);
+
+  console.log("\n*** BRATE-BSHARE ***");
+  await addPool(BSHARE, USDbC,false,zero, startTime, 700, 0, 0);
 
   console.log("\n*** USDR-USDbC ***");
-  await addPool(USDR, USDbC,false,gauge_USDR_USDbC, startTime, 300, 400, 0);
+  await addPool(OVN, USDplus,false,gauge_OVN_USDplus, startTime, 700, 200, 0);
 
 };
 
