@@ -93,7 +93,6 @@ const main = async () => {
   //test
   // const startTime = 1696446000;
 
-
   // token0, token1, stable,gauge, startTime, alloc, feeIn,feeOut
 
   console.log("\n*** BRATE-USDbC ***");
