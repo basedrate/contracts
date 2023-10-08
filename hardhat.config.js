@@ -12,11 +12,11 @@ module.exports = {
         interval: 1000,
       },
       forking: {
-        url: "https://1rpc.io/base", //mainnet
+        url: "https://base.meowrpc.com", //mainnet
       },
     },
     baseMain: {
-      url: `https://1rpc.io/base`,
+      url: `https://base.meowrpc.com`,
       accounts: [process.env.privateKey, process.env.privateKeyRef],
     },
   },
