@@ -12,11 +12,11 @@ module.exports = {
         interval: 1000,
       },
       forking: {
-        url: "https://base.meowrpc.com", //mainnet
+        url: "https://base.getblock.io/cd6d7a8e-a470-4085-9d7c-85cd2884ef34/mainnet/", //mainnet
       },
     },
     baseMain: {
-      url: `https://base.meowrpc.com`,
+      url: `https://base.getblock.io/cd6d7a8e-a470-4085-9d7c-85cd2884ef34/mainnet/`,
       accounts: [process.env.privateKey, process.env.privateKeyRef],
     },
   },

@@ -23,10 +23,15 @@ const vAMMWETHBSHARE = "0xF909B746Ce48dede23c09B05B3fA27754E768Bd2";
 const vAMMAEROUSDbC = "0x2223F9FE624F69Da4D8256A7bCc9104FBA7F8f75";
 const vAMMWUSDRUSDbC = "0x3Fc28BFac25fC8e93B5b2fc15EfBBD5a8aA44eFe";
 const sAMMWETHBRATE = "0x8071175D8fe0055048B0654B10c88CAD5D2D1F19";
+const vAMMBRATEUSDbC = "0x1A3b6d3389e0e0E7EE3f5C43867d6961fc98341b";
+const vAMMBSHAREUSDbC = "0xa491f60Dcbd14121CAE9d7eBA3d73Ee8D4ab4A6c";
+const vAMMBRATEBSHARE = "0xFca502Cde28699C38ff0540a2206Fed5023e8B6A";
+const vAMMOVNUSDPLUS = "0x61366A4e6b1DB1b85DD701f2f4BFa275EF271197";
 
 const vAMMWETHUSDbC_Gauge = "0xeca7Ff920E7162334634c721133F3183B83B0323";
 const vAMMAEROUSDbC_Gauge = "0x9a202c932453fB3d04003979B121E80e5A14eE7b";
 const vAMMWUSDRUSDbC_Gauge = "0xF64957C35409055776C7122AC655347ef88eaF9B";
+const vAMMOVNUSDPLUS_Gauge = "0x00B2149d89677a5069eD4D303941614A33700146";
 
 let deployer;
 let communityFund;
@@ -235,6 +240,41 @@ const depositInGauge = async (token, gauge) => {
   console.log({ balanceBefore, balanceAfter });
 };
 
+const withdrawAndRecoverFromGauge = async (token, gauge) => {
+  const GaugeContract = new ethers.Contract(gauge, GaugeABI, provider);
+  const TokenContract = new ethers.Contract(token, ERC20ABI, provider);
+
+  const balanceBefore = await TokenContract.balanceOf(deployer.address);
+  const balanceInGauge = await GaugeContract.balanceOf(communityFund.address);
+  let data = [];
+  data.push(
+    communityFund.interface.encodeFunctionData("sendCustomTransaction", [
+      gauge,
+      0,
+      "getReward(address)",
+      utils.defaultAbiCoder.encode(["address"], [communityFund.address]),
+    ])
+  );
+  data.push(
+    communityFund.interface.encodeFunctionData("sendCustomTransaction", [
+      gauge,
+      0,
+      "withdraw(uint256)",
+      utils.defaultAbiCoder.encode(["uint256"], [balanceInGauge]),
+    ])
+  );
+  data.push(
+    communityFund.interface.encodeFunctionData("recoverTokens", [
+      token,
+      deployer.address,
+    ])
+  );
+  tx = await communityFund.multicall(data);
+  receipt = await tx.wait();
+  const balanceAfter = await TokenContract.balanceOf(deployer.address);
+  console.log({ balanceBefore, balanceAfter });
+};
+
 const multipleDepositInGauge = async (tokens, gauges) => {
   let data = tokens.map((token, i) =>
     communityFund.interface.encodeFunctionData("sendCustomTransaction", [
@@ -308,23 +348,46 @@ const getGaugeRewards = async (gauges) => {
   }
 };
 
+const recoverTokens = async (amount, token, to) => {
+  console.log({ amount, token, to });
+  const TokenContract = new ethers.Contract(token, ERC20ABI, provider);
+  const balanceBefore = await TokenContract.balanceOf(to);
+  const decimals = await TokenContract.decimals();
+  console.log("In wallet before:", utils.formatEther(balanceBefore));
+  tx = await communityFund.sendCustomTransaction(
+    token,
+    0,
+    "transfer(address,uint256)",
+    utils.defaultAbiCoder.encode(["address", "uint256"], [to, amount])
+  );
+  receipt = await tx.wait();
+  const balanceAfter = await TokenContract.balanceOf(to);
+  console.log({ balanceBefore, balanceAfter });
+};
+
 const main = async () => {
   await setAddresses();
   await attachContracts();
-  //   await getSwapFees([
-  //     sAMMWETHBRATE,
-  //     vAMMWETHBSHARE,
-  //     vAMMAEROUSDbC,
-  //     vAMMWUSDRUSDbC,
-  //     vAMMWETHUSDbC,
-  //   ]);
-  await multiClaimSwapFees([
-    sAMMWETHBRATE,
-    vAMMWETHBSHARE,
-    vAMMAEROUSDbC,
-    vAMMWUSDRUSDbC,
-    vAMMWETHUSDbC,
-  ]);
+
+  // await withdrawAndRecoverFromGauge(vAMMWUSDRUSDbC, vAMMWUSDRUSDbC_Gauge);
+  // await getSwapFees([
+  //   sAMMWETHBRATE,
+  //   vAMMWETHBSHARE,
+  //   vAMMAEROUSDbC,
+  //   vAMMWUSDRUSDbC,
+  //   vAMMWETHUSDbC,
+  //   vAMMBRATEUSDbC,
+  //   vAMMBSHAREUSDbC,
+  //   vAMMBRATEBSHARE,
+  //   vAMMOVNUSDPLUS,
+  // ]);
+  // await multiClaimSwapFees([
+  //   sAMMWETHBRATE,
+  //   vAMMWETHBSHARE,
+  //   vAMMAEROUSDbC,
+  //   vAMMWUSDRUSDbC,
+  //   vAMMWETHUSDbC,
+  // ]);
   //   await claimSwapFees(sAMMWETHBRATE);
   //   await claimSwapFees(vAMMWETHBSHARE);
   //   await claimSwapFees(vAMMWETHBSHARE);
@@ -341,16 +404,49 @@ const main = async () => {
   //     vAMMWUSDRUSDbC,
   //   ]);
 
-  //   await multipleDepositInGauge(
-  //     [vAMMAEROUSDbC, vAMMWUSDRUSDbC, vAMMWETHUSDbC],
-  //     [vAMMAEROUSDbC_Gauge, vAMMWUSDRUSDbC_Gauge, vAMMWETHUSDbC_Gauge]
-  //   );
-  //   await time.increase(86400);
-  //   await getGaugeRewards([
+  // await multipleDepositInGauge(
+  //   [vAMMAEROUSDbC, vAMMWUSDRUSDbC, vAMMWETHUSDbC, vAMMOVNUSDPLUS],
+  //   [
   //     vAMMAEROUSDbC_Gauge,
   //     vAMMWUSDRUSDbC_Gauge,
   //     vAMMWETHUSDbC_Gauge,
-  //   ]);
+  //     vAMMOVNUSDPLUS_Gauge,
+  //   ]
+  // );
+  // await time.increase(86400);
+  // await getGaugeRewards([
+  //   vAMMAEROUSDbC_Gauge,
+  //   vAMMWUSDRUSDbC_Gauge,
+  //   vAMMWETHUSDbC_Gauge,
+  //   vAMMOVNUSDPLUS_Gauge,
+  // ]);
+  const sAMMBRATEETHContract = new ethers.Contract(
+    sAMMWETHBRATE,
+    ERC20ABI,
+    provider
+  );
+  const vAMMBSHAREETHContract = new ethers.Contract(
+    vAMMWETHBSHARE,
+    ERC20ABI,
+    provider
+  );
+  const sAMMBRATEETHBalance = await sAMMBRATEETHContract.balanceOf(
+    communityFund.address
+  );
+  const vAMMBSHAREETHBalance = await vAMMBSHAREETHContract.balanceOf(
+    communityFund.address
+  );
+  console.log({ sAMMBRATEETHBalance, vAMMBSHAREETHBalance });
+  await recoverTokens(
+    sAMMBRATEETHBalance.mul(20).div(100),
+    sAMMWETHBRATE,
+    deployer.address
+  );
+  await recoverTokens(
+    vAMMBSHAREETHBalance.mul(20).div(100),
+    vAMMWETHBSHARE,
+    deployer.address
+  );
 };
 
 main().catch((error) => {
