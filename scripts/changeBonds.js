@@ -5,7 +5,7 @@ const {
 } = require("@nomicfoundation/hardhat-network-helpers");
 let tx, receipt; //transactions
 let deployer; //wallet
-let teamDistributor, treasury, baseRate;
+let teamDistributor, treasury, baseRate, baseBond;
 const utils = ethers.utils;
 
 const TREASURY = "0xdfa73618683587E1B72019546E0DD866B2Ed6Fb4";
@@ -13,6 +13,7 @@ const TEAM_DISTRIBUTOR = "0xD8363377cb54E82d40D0EC44D01d366E4b15eA0b";
 const COMMUNITY = "0x514cE5da2Dc5883e40625b6e182dB437D87941A7";
 const BOARDROOM = "0x60268690851a4881d1e1660fA2b565a316c9bD2b";
 const BRATE = "0xd260115030b9fB6849da169a01ed80b6496d1e99";
+const BBOND = "0xc9210FF20ebBAB41dBecF9D5Bf4D1d2ea15E986c";
 
 const setAddresses = async () => {
   console.log("\n*** SETTING ADDRESSES ***");
@@ -31,6 +32,10 @@ const attachContracts = async () => {
   const Treasury = await ethers.getContractFactory("Treasury", deployer);
   treasury = Treasury.attach(TREASURY);
   console.log(`Treasury deployed to ${treasury.address}`);
+
+  const BaseBond = await ethers.getContractFactory("BaseBond", deployer);
+  baseBond = BaseBond.attach(BBOND);
+  console.log(`BaseBond deployed to ${baseBond.address}`);
 
   const BaseRate = await ethers.getContractFactory("BaseRate", deployer);
   baseRate = BaseRate.attach(BRATE);
@@ -88,6 +93,34 @@ const changePremiumThreshold = async (amount) => {
 };
 
 
+const buyBonds = async () => {
+  console.log("\n*** BUYING BONDS ***");
+  console.log(
+    "BRATE Balance before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+  console.log(
+    "BBOND Balance before:",
+    utils.formatEther(await baseBond.balanceOf(deployer.address))
+  );
+  const Price = await treasury.getBaseRatePrice();
+  tx = await baseRate
+    .connect(deployer)
+    .approve(treasury.address, ethers.constants.MaxUint256);
+  receipt = await tx.wait();
+  tx = await treasury.connect(deployer).buyBonds(utils.parseEther("1"), Price);
+  receipt = await tx.wait();
+
+  console.log(
+    "BBOND Balance After:",
+    utils.formatEther(await baseBond.balanceOf(deployer.address))
+  );
+  console.log(
+    "BRATE Balance before:",
+    utils.formatEther(await baseRate.balanceOf(deployer.address))
+  );
+};
+
 
 
 const allocateSeigniorage = async () => {
@@ -127,8 +160,9 @@ const main = async () => {
   await setAddresses();
   await attachContracts();
 
-  await changeDiscount(3000);
-  await changePremium(5000);
+  await changeDiscount(10000);
+
+  await buyBonds();
 
   // await time.increase(6 * 3600);
   // await allocateSeigniorage();
