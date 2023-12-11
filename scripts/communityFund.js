@@ -17,6 +17,8 @@ const AERO = "0x940181a94A35A4569E4529A3CDfB74e38FD98631";
 const wUSDR = "0x9483ab65847a447e36d21af1cab8c87e9712ff93";
 const USDbC = "0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca";
 const WETH = "0x4200000000000000000000000000000000000006";
+const OVN = "0xA3d1a8DEB97B111454B294E2324EfAD13a9d8396";
+const USDplus = "0xB79DD08EA68A908A97220C76d19A6aA9cBDE4376";
 const COMMUNITY_FUNDV2 = "0x3A462BC5525eEC6fF01e934486BFd874CDbF01cA";
 const vAMMWETHUSDbC = "0xB4885Bc63399BF5518b994c1d0C153334Ee579D0";
 const vAMMWETHBSHARE = "0xF909B746Ce48dede23c09B05B3fA27754E768Bd2";
@@ -332,6 +334,32 @@ const claimFromGauge = async (gauge) => {
   console.log({ balanceBefore, balanceAfter });
 };
 
+const multiClaimFromGauge = async (gauges) => {
+  const AEROBalanceBefore = await AEROContract.balanceOf(communityFund.address);
+
+  const data = gauges.map((gauge) =>
+    communityFund.interface.encodeFunctionData("sendCustomTransaction", [
+      gauge,
+      0,
+      "getReward(address)",
+      utils.defaultAbiCoder.encode(["address"], [communityFund.address]),
+    ])
+  );
+
+  tx = await communityFund.multicall(data);
+  receipt = await tx.wait();
+
+  const AEROBalanceAfter = await AEROContract.balanceOf(communityFund.address);
+
+  console.log(
+    "AERO claimed:",
+    utils.formatUnits(
+      AEROBalanceAfter.sub(AEROBalanceBefore),
+      await AEROContract.decimals()
+    )
+  );
+};
+
 const getGaugeRewards = async (gauges) => {
   for (let i = 0; i < gauges.length; i++) {
     const gauge = gauges[i];
@@ -365,6 +393,32 @@ const recoverTokens = async (amount, token, to) => {
   console.log({ balanceBefore, balanceAfter });
 };
 
+const multiRecoverTokens = async (tokens) => {
+  const data = await Promise.all(
+    tokens.map(async (token, i) => {
+      const tokenContract = new ethers.Contract(token, ERC20ABI, provider);
+      const balance = await tokenContract.balanceOf(communityFund.address);
+      return communityFund.interface.encodeFunctionData(
+        "sendCustomTransaction",
+        [
+          token,
+          0,
+          "transfer(address,uint256)",
+          utils.defaultAbiCoder.encode(
+            ["address", "uint256"],
+            [deployer.address, balance]
+          ),
+        ]
+      );
+    })
+  );
+
+  tx = await communityFund.multicall(data);
+  receipt = await tx.wait();
+
+  console.log("Tokens Recovered");
+};
+
 const main = async () => {
   await setAddresses();
   await attachContracts();
@@ -387,6 +441,7 @@ const main = async () => {
   //   vAMMAEROUSDbC,
   //   vAMMWUSDRUSDbC,
   //   vAMMWETHUSDbC,
+  //   vAMMOVNUSDPLUS,
   // ]);
   //   await claimSwapFees(sAMMWETHBRATE);
   //   await claimSwapFees(vAMMWETHBSHARE);
@@ -394,15 +449,15 @@ const main = async () => {
   //   await claimSwapFees(vAMMWETHBSHARE);
   //   await depositInGauge(vAMMWUSDRUSDbC, vAMMWUSDRUSDbC_Gauge);
   //   await time.increase(86400);
-  //   await claimFromGauge(vAMMWUSDRUSDbC_Gauge);
+  // await claimFromGauge(vAMMAEROUSDbC_Gauge);
 
-  //   await multiClaimFees([
-  //     sAMMWETHBRATE,
-  //     vAMMWETHBSHARE,
-  //     vAMMAEROUSDbC,
-  //     vAMMWETHUSDbC,
-  //     vAMMWUSDRUSDbC,
-  //   ]);
+  // await multiClaimFees([
+  //   sAMMWETHBRATE,
+  //   vAMMWETHBSHARE,
+  //   vAMMAEROUSDbC,
+  //   vAMMWETHUSDbC,
+  //   vAMMWUSDRUSDbC,
+  // ]);
 
   // await multipleDepositInGauge(
   //   [vAMMAEROUSDbC, vAMMWUSDRUSDbC, vAMMWETHUSDbC, vAMMOVNUSDPLUS],
@@ -420,33 +475,52 @@ const main = async () => {
   //   vAMMWETHUSDbC_Gauge,
   //   vAMMOVNUSDPLUS_Gauge,
   // ]);
-  const sAMMBRATEETHContract = new ethers.Contract(
-    sAMMWETHBRATE,
-    ERC20ABI,
-    provider
-  );
-  const vAMMBSHAREETHContract = new ethers.Contract(
-    vAMMWETHBSHARE,
-    ERC20ABI,
-    provider
-  );
-  const sAMMBRATEETHBalance = await sAMMBRATEETHContract.balanceOf(
-    communityFund.address
-  );
-  const vAMMBSHAREETHBalance = await vAMMBSHAREETHContract.balanceOf(
-    communityFund.address
-  );
-  console.log({ sAMMBRATEETHBalance, vAMMBSHAREETHBalance });
-  await recoverTokens(
-    sAMMBRATEETHBalance.mul(20).div(100),
-    sAMMWETHBRATE,
-    deployer.address
-  );
-  await recoverTokens(
-    vAMMBSHAREETHBalance.mul(20).div(100),
-    vAMMWETHBSHARE,
-    deployer.address
-  );
+  // const sAMMBRATEETHContract = new ethers.Contract(
+  //   sAMMWETHBRATE,
+  //   ERC20ABI,
+  //   provider
+  // );
+  // const vAMMBSHAREETHContract = new ethers.Contract(
+  //   vAMMWETHBSHARE,
+  //   ERC20ABI,
+  //   provider
+  // );
+  // const sAMMBRATEETHBalance = await sAMMBRATEETHContract.balanceOf(
+  //   communityFund.address
+  // );
+  // const vAMMBSHAREETHBalance = await vAMMBSHAREETHContract.balanceOf(
+  //   communityFund.address
+  // );
+  // console.log({ sAMMBRATEETHBalance, vAMMBSHAREETHBalance });
+  // await recoverTokens(
+  //   sAMMBRATEETHBalance.mul(20).div(100),
+  //   sAMMWETHBRATE,
+  //   deployer.address
+  // );
+  // const BRATEBalance = await BRATEContract.balanceOf(communityFund.address);
+  // await recoverTokens(BRATEBalance, BRATE, deployer.address);
+  // await recoverTokens(
+  //   vAMMBSHAREETHBalance.mul(20).div(100),
+  //   vAMMWETHBSHARE,
+  //   deployer.address
+  // );
+
+  // await multiClaimFromGauge([
+  //   vAMMAEROUSDbC_Gauge,
+  //   vAMMOVNUSDPLUS_Gauge,
+  //   vAMMWETHUSDbC_Gauge,
+  // ]);
+
+  await multiRecoverTokens([
+    WETH,
+    BSHARE,
+    AERO,
+    BRATE,
+    USDbC,
+    OVN,
+    USDplus,
+    wUSDR,
+  ]);
 };
 
 main().catch((error) => {
